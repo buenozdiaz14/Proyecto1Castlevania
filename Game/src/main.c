@@ -12,12 +12,16 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #define Spring_Width 16
 #define Spring_Height 32
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+
+// Structure for animation frames
 struct Animation
 {
 	int Frame /*= 0*/;
 	int Counter /*= 0*/;
 	int Speed /*= 5*/;
 } Spring;
+
+// Function to handle animation frame cycling
 void AnimationSettings()
 {
 	Spring.Counter++;
@@ -38,19 +42,27 @@ int main()
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
 
 	int x = 0;
-	int vX = 1;
+	int vX = 2;  // Velocidad de movimiento horizontal constante
 	int y = 10;
-	int vY = 1;
 	Spring.Speed = 5;
 
-	bool Direction = 0;
+	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
 	x = 200;
 	y = 175;
 
-	int G = 2;
-
+	float G = 0.35f;  // Gravedad reducida para caída más lenta y salto más alto
 	int Floor = 200;
-	bool Momentum = 1;
+	bool canMove = true;  // Puede moverse? (true = puede moverse, false = en el aire/saltando)
+
+	// Variables de salto
+	bool isJumping = false;      // Indica si el jugador está en el aire
+	int jumpDirection = 0;       // 0 = arriba, -1 = izquierda, 1 = derecha
+	float verticalSpeed = 0;     // Velocidad vertical actual
+	float initialJumpSpeed = -9.5f;  // Velocidad inicial para salto alto
+
+	// Variables para el movimiento horizontal durante el salto
+	int startX = 0;              // Posición X cuando comenzó el salto
+	float horizontalSpeed = 0;   // Velocidad horizontal durante el salto (igual que vX)
 
 	//---------------------------------------------------
 
@@ -82,86 +94,161 @@ int main()
 
 		ClearBackground(BLACK);
 
-
 		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
-		if (IsKeyUp(KEY_D) && IsKeyUp(KEY_A))
-		{
-			if (Direction == 0)
-			{
-				DrawTexture(Rabbit, x, y, WHITE);
-			}
-			else
-			{
-				DrawTexture(Rabbit_O, x, y, WHITE);
-			}
-		}
-		if (IsKeyDown(KEY_D) && IsKeyDown(KEY_A))
-		{
-			if (Direction == 0)
-			{
-				DrawTexture(Rabbit, x, y, WHITE);
-			}
-			else
-			{
-				DrawTexture(Rabbit_O, x, y, WHITE);
-			}
-		}
-		DrawRectangle(0, 233, screenWidth, 10, WHITE);
-
-		AnimationSettings();
 
 		//------------------Player Movement--------------------
-		y = y + G; //Gravity
 
-		if (y > screenHeight - 100) y = screenHeight - 100;
-		if (y < 0) y = 0;
-		if (x > screenWidth - 15) x = screenWidth - 15;
-		if (x < -5) x = -5;
-
-		if (y > Floor)
+		// Manejar el salto
+		if (canMove && !isJumping)
 		{
-			y = Floor;
-			Momentum = true;
-		}
-
-
-		if (Momentum == true)
-		{
-			if (IsKeyPressed(KEY_SPACE))
+			// Verificar si se presiona W para saltar
+			if (IsKeyPressed(KEY_W))
 			{
-				int Stanley = y;
-				int Jump = 100;
-				y = y - Jump;
-				Momentum = false;
-			}
-			if (IsKeyUp(KEY_A))
-			{
+				isJumping = true;
+				canMove = false;
+				verticalSpeed = initialJumpSpeed;
+				startX = x;
+
+				// Determinar dirección y velocidad horizontal del salto
 				if (IsKeyDown(KEY_D))
 				{
-					x = x + vX;
+					jumpDirection = 1;  // Saltar derecha
 					Direction = 0;
-
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimR, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
-
+					horizontalSpeed = vX;  // Misma velocidad que caminando
 				}
-			}
-			if (IsKeyUp(KEY_D))
-			{
-				if (IsKeyDown(KEY_A))
+				else if (IsKeyDown(KEY_A))
 				{
-					x = x - vX;
+					jumpDirection = -1;  // Saltar izquierda
 					Direction = 1;
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimL, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
+					horizontalSpeed = vX;  // Misma velocidad que caminando
+				}
+				else
+				{
+					jumpDirection = 0;  // Saltar recto
+					horizontalSpeed = 0;
 				}
 			}
 		}
-		//-------------------------------------------------
 
+		// Física del salto
+		if (isJumping)
+		{
+			// Actualizar velocidad vertical con gravedad
+			verticalSpeed += G;
+			y += (int)verticalSpeed;
 
+			// Movimiento horizontal DURANTE EL SALTO - MANTIENE LA MISMA VELOCIDAD QUE EN EL SUELO
+			if (jumpDirection == 1)
+			{
+				// Moverse hacia la derecha a la misma velocidad que caminando
+				x += (int)horizontalSpeed;
+			}
+			else if (jumpDirection == -1)
+			{
+				// Moverse hacia la izquierda a la misma velocidad que caminando
+				x -= (int)horizontalSpeed;
+			}
+
+			// Verificar si ha llegado al suelo
+			if (y >= Floor)
+			{
+				y = Floor;
+				isJumping = false;
+				canMove = true;
+				verticalSpeed = 0;
+				jumpDirection = 0;
+				horizontalSpeed = 0;
+			}
+
+			// Evitar que pase el techo
+			if (y < 0)
+			{
+				y = 0;
+				verticalSpeed = 0;
+			}
+		}
+
+		// Movimiento en el suelo
+		if (canMove && !isJumping)
+		{
+			// Aplicar gravedad para caer de plataformas
+			y = y + (int)G;
+
+			// Movimiento horizontal (velocidad vX)
+			if (IsKeyDown(KEY_D))
+			{
+				x = x + vX;
+				Direction = 0;
+			}
+			else if (IsKeyDown(KEY_A))
+			{
+				x = x - vX;
+				Direction = 1;
+			}
+
+			// Colisión con el suelo
+			if (y >= Floor)
+			{
+				y = Floor;
+			}
+		}
+
+		// Límites de la pantalla
+		if (x > screenWidth - 15) x = screenWidth - 15;
+		if (x < -5) x = -5;
+		if (y > screenHeight - 100) y = screenHeight - 100;
+
+		//------------------Dibujado de Sprites--------------------
+
+		// Dibujar animación cuando está en movimiento en el suelo
+		if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
+		{
+			AnimationSettings();
+			if (IsKeyDown(KEY_D))
+			{
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+			else if (IsKeyDown(KEY_A))
+			{
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+		}
+		// Dibujar sprite estático cuando está quieto en el suelo
+		else if (canMove && !isJumping)
+		{
+			if (Direction == 0)
+			{
+				DrawTexture(Rabbit, x, y, WHITE);
+			}
+			else
+			{
+				DrawTexture(Rabbit_O, x, y, WHITE);
+			}
+		}
+		// Dibujar sprite durante el salto
+		else if (isJumping)
+		{
+			AnimationSettings();
+			if (Direction == 0)
+			{
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+			else
+			{
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+		}
+
+		// Dibujar el suelo
+		DrawRectangle(0, 233, screenWidth, 10, WHITE);
 
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();
