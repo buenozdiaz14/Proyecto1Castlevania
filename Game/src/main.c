@@ -1,4 +1,4 @@
-/*
+﻿/*
 Raylib example file.
 This is an example main file for a simple raylib project.
 Use this as a starting point or replace it with your code.
@@ -78,7 +78,7 @@ int main()
 		//------------------Camera--------------------
 
 		//--------------------------------------------
-		BeginDrawing();
+		/*BeginDrawing();
 
 		ClearBackground(BLACK);
 
@@ -106,7 +106,7 @@ int main()
 				DrawTexture(Rabbit_O, x, y, WHITE);
 			}
 		}
-		DrawRectangle(0, 233, screenWidth, 10, WHITE);
+		DrawRectangle(0, 233, screenWidth, 10, WHITE);*/
 
 		AnimationSettings();
 
@@ -180,5 +180,92 @@ int main()
 
 	// destroy the window and cleanup the OpenGL context
 	CloseWindow();
+	return 0;
+}
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 450
+
+#define TILE_SIZE 32
+#define MAP_WIDTH 25
+#define MAP_HEIGHT 10
+
+int map[MAP_HEIGHT][MAP_WIDTH] = {
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+};
+
+int fondo(void)
+{
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Castlevania Demo");
+
+	// 📸 Cargar imagen
+	Texture2D fondo = LoadTexture("resources/castlevania.png");
+
+	// comprobar si cargó
+	if (fondo.id == 0) {
+		TraceLog(LOG_ERROR, "No se pudo cargar la imagen");
+	}
+
+	SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
+
+	Camera2D camera = { 0 };
+	camera.offset = (Vector2){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
+	camera.zoom = 2.0f;
+
+	Vector2 player = { 100, 100 };
+
+	SetTargetFPS(60);
+
+	while (!WindowShouldClose())
+	{
+		// movimiento
+		if (IsKeyDown(KEY_RIGHT)) player.x += 2;
+		if (IsKeyDown(KEY_LEFT))  player.x -= 2;
+		if (IsKeyDown(KEY_DOWN))  player.y += 2;
+		if (IsKeyDown(KEY_UP))    player.y -= 2;
+
+		camera.target = player;
+
+		BeginDrawing();
+		ClearBackground(BLACK);
+
+		BeginMode2D(camera);
+
+		// 🖼️ fondo (nivel)
+		DrawTextureEx(fondo, (Vector2) { 0.0f, 0.0f }, 0.0f, 2.0f, WHITE);
+
+		// mapa debug
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				if (map[y][x] == 1) {
+					DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, DARKGRAY);
+				}
+			}
+		}
+
+		// jugador
+		DrawRectangle((int)player.x, (int)player.y, 20, 20, RED);
+
+		EndMode2D();
+
+		// mensaje si falla la imagen
+		if (fondo.id == 0) {
+			DrawText("ERROR: No se cargo la imagen", 10, 10, 20, RED);
+		}
+
+		EndDrawing();
+	}
+
+	UnloadTexture(fondo);
+	CloseWindow();
+
 	return 0;
 }
