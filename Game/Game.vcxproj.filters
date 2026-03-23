@@ -35,6 +35,15 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\Anim_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Anim_R.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\OtherSide.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>

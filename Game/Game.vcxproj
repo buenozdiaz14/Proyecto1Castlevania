@@ -313,6 +313,9 @@
     <ResourceCompile Include="src\application.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\Anim_L.png" />
+    <Image Include="resources\Anim_R.png" />
+    <Image Include="resources\OtherSide.png" />
     <Image Include="resources\wabbit_alpha.png" />
   </ItemGroup>
   <ItemGroup>

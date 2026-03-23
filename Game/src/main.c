@@ -30,28 +30,45 @@ void AnimationSettings()
 	}
 }
 
+//------------------Variables--------------------
+int x;
+int vX = 1;
+int y;
+int vY = 1;
+int Stanley = 0;
+
+bool Direction = 0;
+
+int G = 2;
+
+int PlataformX = 100;
+int PlataformY = 50;
+int PlataformW = 100;
+int PlataformH = 10;
+
+int FloorX = 0;
+int FloorY = 200;
+int FloorW = 1000;
+int FloorH = 10;
+
+
+
+bool collision;
+bool TouchFloor;
+bool Jump;
+//---------------------------------------------------
 
 int main()
 {
 	//------------------Miscellaneous--------------------
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-
-	int x = 0;
-	int vX = 1;
-	int y = 10;
-	int vY = 1;
 	Spring.Speed = 5;
-
-	bool Direction = 0;
 	x = 200;
-	y = 175;
+	y = 50;
 
-	int G = 2;
-
-	int Floor = 200;
-	bool Momentum = 1;
-
+	Rectangle Plataform1 = { PlataformX, PlataformY, PlataformW, PlataformH };
+	Rectangle Floor = { FloorX, FloorY, FloorW, FloorH };
 	//---------------------------------------------------
 
 	//------------------Window--------------------
@@ -82,8 +99,33 @@ int main()
 
 		ClearBackground(BLACK);
 
-
+		//------------------World--------------------
 		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
+	
+		Rectangle Collision = { x, y, Spring_Width, Spring_Height };
+		bool PlataformCollision = CheckCollisionRecs(Collision, Plataform1);
+		bool TouchFloor = CheckCollisionRecs(Collision, Floor);
+
+		DrawRectangleRec(Collision, RED);
+		DrawRectangleRec(Plataform1, GOLD);
+		DrawRectangleRec(Floor, WHITE);
+
+		AnimationSettings();
+		//-------------------------------------------
+		
+		//------------------Player Movement--------------------
+		y = y + G; //Gravity
+
+		if (y > screenHeight - 100) y = screenHeight - 100;
+		if (y < 0) y = 0;
+		if (x > screenWidth - 15) x = screenWidth - 15;
+		if (x < -5) x = -5;
+
+		if (TouchFloor)
+		{
+			y = FloorY-10;
+		}
+
 		if (IsKeyUp(KEY_D) && IsKeyUp(KEY_A))
 		{
 			if (Direction == 0)
@@ -106,57 +148,70 @@ int main()
 				DrawTexture(Rabbit_O, x, y, WHITE);
 			}
 		}
-		DrawRectangle(0, 233, screenWidth, 10, WHITE);
 
-		AnimationSettings();
-
-		//------------------Player Movement--------------------
-		y = y + G; //Gravity
-
-		if (y > screenHeight - 100) y = screenHeight - 100;
-		if (y < 0) y = 0;
-		if (x > screenWidth - 15) x = screenWidth - 15;
-		if (x < -5) x = -5;
-
-		if (y > Floor)
+		if (IsKeyPressed(KEY_SPACE))
 		{
-			y = Floor;
-			Momentum = true;
+			Jump = true;
+		}
+		if (Jump)
+		{
+			int Movement = 2;
+			Stanley += 1;
+			if (Stanley < 80)
+			{
+				y -= Movement;
+			}
+			else if (!TouchFloor)
+			{
+				y += Movement;
+			}
+
+			if (TouchFloor)
+			{
+			Jump = false;
+			Stanley = 0;
+			y = FloorY-30;
+			DrawText("COLLISION!", 10, 25, 29, RED);
+			}
+
+			if (PlataformCollision)
+			{
+				y -= Movement;
+			}
+			if (IsKeyPressed(KEY_SPACE) && PlataformCollision)
+			{
+				Stanley = 0;
+				DrawText("PLATAFORM COLLISION!", 10, 25, 29, RED);
+			}
+			if (IsKeyPressed(KEY_SPACE) && PlataformCollision || IsKeyPressed(KEY_SPACE) && TouchFloor)
+			{
+				Movement = 1;
+				y -= Movement;
+			}
 		}
 
-
-		if (Momentum == true)
+		if (IsKeyUp(KEY_A))
 		{
-			if (IsKeyPressed(KEY_SPACE))
+			if (IsKeyDown(KEY_D))
 			{
-				int Stanley = y;
-				int Jump = 100;
-				y = y - Jump;
-				Momentum = false;
-			}
-			if (IsKeyUp(KEY_A))
-			{
-				if (IsKeyDown(KEY_D))
-				{
-					x = x + vX;
-					Direction = 0;
+				x = x + vX;
+				Direction = 0;
 
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimR, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimR, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
 
-				}
 			}
-			if (IsKeyUp(KEY_D))
+		}
+		if (IsKeyUp(KEY_D))
+		{
+			if (IsKeyDown(KEY_A))
 			{
-				if (IsKeyDown(KEY_A))
-				{
-					x = x - vX;
-					Direction = 1;
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimL, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
-				}
+				x = x - vX;
+				Direction = 1;
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(AnimL, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
 			}
 		}
 		//-------------------------------------------------
