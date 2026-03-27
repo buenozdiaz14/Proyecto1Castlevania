@@ -41,16 +41,16 @@ int main()
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
 
-	int x = 0;
-	int vX = 2;  // Velocidad de movimiento horizontal constante
-	int y = 10;
+	float x = 0;
+	float vX = 1;  // Velocidad de movimiento horizontal constante
+	float y = 10;
 	Spring.Speed = 5;
 
 	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
 	x = 200;
 	y = 175;
 
-	float G = 0.10f;  // Gravedad reducida para caída más lenta y salto más alto
+	float G = 0.1f;  // Gravedad reducida para caída más lenta y salto más alto
 	int Floor = 200;
 	bool canMove = true;  // Puede moverse? (true = puede moverse, false = en el aire/saltando)
 
@@ -102,7 +102,7 @@ int main()
 		if (canMove && !isJumping)
 		{
 			// Verificar si se presiona W para saltar
-			if (IsKeyPressed(KEY_W))
+			if (IsKeyPressed(KEY_SPACE))
 			{
 				isJumping = true;
 				canMove = false;
@@ -114,13 +114,13 @@ int main()
 				{
 					jumpDirection = 1;  // Saltar derecha
 					Direction = 0;
-					horizontalSpeed = vX;  // Misma velocidad que caminando
+					horizontalSpeed = vX + 1.5;  // Misma velocidad que caminando
 				}
 				else if (IsKeyDown(KEY_A))
 				{
 					jumpDirection = -1;  // Saltar izquierda
 					Direction = 1;
-					horizontalSpeed = vX;  // Misma velocidad que caminando
+					horizontalSpeed = vX + 1.5;  // Misma velocidad que caminando
 				}
 				else
 				{
@@ -134,19 +134,19 @@ int main()
 		if (isJumping)
 		{
 			// Actualizar velocidad vertical con gravedad
-			verticalSpeed += G;
-			y += (int)verticalSpeed;
+			verticalSpeed += G + 0.02;
+			y += (float)verticalSpeed;
 
 			// Movimiento horizontal DURANTE EL SALTO - MANTIENE LA MISMA VELOCIDAD QUE EN EL SUELO
 			if (jumpDirection == 1)
 			{
 				// Moverse hacia la derecha a la misma velocidad que caminando
-				x += (int)horizontalSpeed;
+				x += (float)horizontalSpeed;
 			}
 			else if (jumpDirection == -1)
 			{
 				// Moverse hacia la izquierda a la misma velocidad que caminando
-				x -= (int)horizontalSpeed;
+				x -= (float)horizontalSpeed;
 			}
 
 			// Verificar si ha llegado al suelo
@@ -172,7 +172,7 @@ int main()
 		if (canMove && !isJumping)
 		{
 			// Aplicar gravedad para caer de plataformas
-			y = y + (int)G;
+			y = y + (float)G;
 
 			// Movimiento horizontal (velocidad vX)
 			if (IsKeyDown(KEY_D))
