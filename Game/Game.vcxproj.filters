@@ -47,5 +47,29 @@
     <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\All Sprites.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Idle.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Jump_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Walking_R.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Attack.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Idle_Sided.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Walking_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Jump_R .png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

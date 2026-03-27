@@ -313,10 +313,18 @@
     <ResourceCompile Include="src\application.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\All Sprites.png" />
     <Image Include="resources\Anim_L.png" />
     <Image Include="resources\Anim_R.png" />
+    <Image Include="resources\Attack.png" />
+    <Image Include="resources\Idle_Sided.png" />
+    <Image Include="resources\Idle.png" />
+    <Image Include="resources\Jump_R .png" />
+    <Image Include="resources\Jump_L.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\wabbit_alpha.png" />
+    <Image Include="resources\Walking_L.png" />
+    <Image Include="resources\Walking_R.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="raylib.vcxproj">

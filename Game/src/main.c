@@ -10,7 +10,7 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <stdio.h>
 #include "raylib.h"
 #define Spring_Width 16
-#define Spring_Height 32
+#define Spring_Height 31
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
 // Structure for animation frames
@@ -25,12 +25,12 @@ struct Animation
 void AnimationSettings()
 {
 	Spring.Counter++;
-	if (Spring.Counter >= (85 / Spring.Speed))
+	if (Spring.Counter >= (100/ Spring.Speed))
 	{
 		Spring.Counter = 0;
 		Spring.Frame++;
 
-		if (Spring.Frame > 1) Spring.Frame = 0;
+		if (Spring.Frame > 2) Spring.Frame = 0;
 	}
 }
 
@@ -76,11 +76,14 @@ int main()
 	//------------------Textures--------------------
 	SearchAndSetResourceDir("resources"); // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
 
-	Texture Rabbit = LoadTexture("wabbit_alpha.png");
-	Texture Rabbit_O = LoadTexture("OtherSide.png");
+	Texture Rabbit = LoadTexture("Idle.png");
+	Texture Rabbit_O = LoadTexture("Idle_Sided.png");
 
-	Texture AnimR = LoadTexture("Anim_R.png");
-	Texture AnimL = LoadTexture("Anim_L.png");
+	Texture AnimR = LoadTexture("Walking_R.png");
+	Texture AnimL = LoadTexture("Walking_L.png");
+
+	Texture JumpR = LoadTexture("Jump_R.png");
+	Texture JumpL = LoadTexture("Jump_L.png");
 
 	//-----------------------------------------------
 
@@ -237,13 +240,13 @@ int main()
 			{
 				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
 				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-				DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				DrawTexturePro(JumpR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 			}
 			else
 			{
 				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
 				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-				DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				DrawTexturePro(JumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 			}
 		}
 
