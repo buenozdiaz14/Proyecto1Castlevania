@@ -68,7 +68,7 @@
     <Image Include="resources\Walking_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\Jump_R .png">
+    <Image Include="resources\Jump_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>
