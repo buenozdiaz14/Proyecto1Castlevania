@@ -5,267 +5,208 @@ Use this as a starting point or replace it with your code.
 
 by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
 
+Corregido y ampliado para incluir mapa, fondo, animaciones y físicas.
 */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "raylib.h"
-#define Spring_Width 16
-#define Spring_Height 32
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
-struct Animation
-{
-	int Frame /*= 0*/;
-	int Counter /*= 0*/;
-	int Speed /*= 5*/;
-} Spring;
-void AnimationSettings()
-{
-	Spring.Counter++;
-	if (Spring.Counter >= (85 / Spring.Speed))
-	{
-		Spring.Counter = 0;
-		Spring.Frame++;
+#include "resource_dir.h"   // utility header for SearchAndSetResourceDir
 
-		if (Spring.Frame > 1) Spring.Frame = 0;
-	}
-}
-
-
-int main()
-{
-	//------------------Miscellaneous--------------------
-	// Tell the window to use vsync and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-
-	int x = 0;
-	int vX = 1;
-	int y = 10;
-	int vY = 1;
-	Spring.Speed = 5;
-
-	bool Direction = 0;
-	x = 200;
-	y = 175;
-
-	int G = 2;
-
-	int Floor = 200;
-	bool Momentum = 1;
-
-	//---------------------------------------------------
-
-	//------------------Window--------------------
-	int screenWidth = 400; //X
-	int screenHeight = 350; //Y
-
-	InitWindow(screenWidth, screenHeight, "_C4STL3V4N14_");
-	//---------------------------------------------
-
-	//------------------Textures--------------------
-	SearchAndSetResourceDir("resources"); // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-
-	Texture Rabbit = LoadTexture("wabbit_alpha.png");
-	Texture Rabbit_O = LoadTexture("OtherSide.png");
-
-	Texture AnimR = LoadTexture("Anim_R.png");
-	Texture AnimL = LoadTexture("Anim_L.png");
-
-	//-----------------------------------------------
-
-	//------------------Gameplay Loop--------------------
-	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
-	{
-		//------------------Camera--------------------
-
-		//--------------------------------------------
-		/*BeginDrawing();
-
-		ClearBackground(BLACK);
-
-
-		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
-		if (IsKeyUp(KEY_D) && IsKeyUp(KEY_A))
-		{
-			if (Direction == 0)
-			{
-				DrawTexture(Rabbit, x, y, WHITE);
-			}
-			else
-			{
-				DrawTexture(Rabbit_O, x, y, WHITE);
-			}
-		}
-		if (IsKeyDown(KEY_D) && IsKeyDown(KEY_A))
-		{
-			if (Direction == 0)
-			{
-				DrawTexture(Rabbit, x, y, WHITE);
-			}
-			else
-			{
-				DrawTexture(Rabbit_O, x, y, WHITE);
-			}
-		}
-		DrawRectangle(0, 233, screenWidth, 10, WHITE);*/
-
-		AnimationSettings();
-
-		//------------------Player Movement--------------------
-		y = y + G; //Gravity
-
-		if (y > screenHeight - 100) y = screenHeight - 100;
-		if (y < 0) y = 0;
-		if (x > screenWidth - 15) x = screenWidth - 15;
-		if (x < -5) x = -5;
-
-		if (y > Floor)
-		{
-			y = Floor;
-			Momentum = true;
-		}
-
-
-		if (Momentum == true)
-		{
-			if (IsKeyPressed(KEY_SPACE))
-			{
-				int Stanley = y;
-				int Jump = 100;
-				y = y - Jump;
-				Momentum = false;
-			}
-			if (IsKeyUp(KEY_A))
-			{
-				if (IsKeyDown(KEY_D))
-				{
-					x = x + vX;
-					Direction = 0;
-
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimR, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
-
-				}
-			}
-			if (IsKeyUp(KEY_D))
-			{
-				if (IsKeyDown(KEY_A))
-				{
-					x = x - vX;
-					Direction = 1;
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimL, source, dest, (Vector2) { dest.width / x, dest.height / y }, 0, WHITE);
-				}
-			}
-		}
-		//-------------------------------------------------
-
-
-
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
-	//---------------------------------------------------
-
-
-	//-----------------Cleanup-----------------
-
-	// unload our texture so it can be cleaned up
-	UnloadTexture(Rabbit);
-	UnloadTexture(Rabbit_O);
-
-	UnloadTexture(AnimL);
-	UnloadTexture(AnimR);
-
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
-}
-#define SCREEN_WIDTH 800
+// ---------- Constantes del mapa y pantalla ----------
+#define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 450
+#define TILE_SIZE     32
+#define MAP_WIDTH     25
+#define MAP_HEIGHT    10
 
-#define TILE_SIZE 32
-#define MAP_WIDTH 25
-#define MAP_HEIGHT 10
-
+// ---------- Mapa (0 = vacío, 1 = suelo sólido) ----------
 int map[MAP_HEIGHT][MAP_WIDTH] = {
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
 
-int fondo(void)
-{
-	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Castlevania Demo");
+// ---------- Estructura de animación (para el conejo) ----------
+#define SPRING_WIDTH  32   // asumimos ancho del sprite de animación
+#define SPRING_HEIGHT 32
 
-	// 📸 Cargar imagen
-	Texture2D fondo = LoadTexture("resources/castlevania.png");
+struct Animation {
+    int Frame;
+    int Counter;
+    int Speed;
+} Spring;
 
-	// comprobar si cargó
-	if (fondo.id == 0) {
-		TraceLog(LOG_ERROR, "No se pudo cargar la imagen");
-	}
+void AnimationSettings() {
+    Spring.Counter++;
+    if (Spring.Counter >= (85 / Spring.Speed)) {
+        Spring.Counter = 0;
+        Spring.Frame++;
+        if (Spring.Frame > 1) Spring.Frame = 0;
+    }
+}
 
-	SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
+// ---------- Función principal ----------
+int main() {
+    // Configuración de ventana
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "_C4STL3V4N14_");
+    SearchAndSetResourceDir("resources");   // buscar carpeta resources
 
-	Camera2D camera = { 0 };
-	camera.offset = (Vector2){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
-	camera.zoom = 2.0f;
+    // Cargar texturas
+    Texture2D rabbitIdleR = LoadTexture("wabbit_alpha.png");
+    Texture2D rabbitIdleL = LoadTexture("OtherSide.png");
+    Texture2D animR = LoadTexture("Anim_R.png");
+    Texture2D animL = LoadTexture("Anim_L.png");
+    Texture2D fondo = LoadTexture("castevania.png");
 
-	Vector2 player = { 100, 100 };
+    if (fondo.id == 0) {
+        TraceLog(LOG_ERROR, "No se pudo cargar la imagen 'castlevania.png'");
+    }
+    SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(60);
+    // Variables del jugador
+    float playerX = 200.0f;
+    float playerY = 0.0f;
+    float velocityY = 0.0f;
+    const float GRAVITY = 0.8f;
+    const float JUMP_FORCE = -12.0f;
+    bool isGrounded = false;
+    int direction = 0;          // 0 = derecha, 1 = izquierda
+    bool isMoving = false;
+    float moveSpeed = 3.0f;
 
-	while (!WindowShouldClose())
-	{
-		// movimiento
-		if (IsKeyDown(KEY_RIGHT)) player.x += 2;
-		if (IsKeyDown(KEY_LEFT))  player.x -= 2;
-		if (IsKeyDown(KEY_DOWN))  player.y += 2;
-		if (IsKeyDown(KEY_UP))    player.y -= 2;
+    // Configurar animación
+    Spring.Speed = 5;
+    Spring.Frame = 0;
+    Spring.Counter = 0;
 
-		camera.target = player;
+    // Cámara que sigue al jugador
+    Camera2D camera = { 0 };
+    camera.offset = (Vector2){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f };
+    camera.zoom = 2.0f;
 
-		BeginDrawing();
-		ClearBackground(BLACK);
+    SetTargetFPS(60);
 
-		BeginMode2D(camera);
+    // Bucle principal
+    while (!WindowShouldClose()) {
+        // ----- Actualizar animación -----
+        AnimationSettings();
 
-		// 🖼️ fondo (nivel)
-		DrawTextureEx(fondo, (Vector2) { 0.0f, 0.0f }, 0.0f, 2.0f, WHITE);
+        // ----- Movimiento horizontal -----
+        isMoving = false;
+        if (IsKeyDown(KEY_D)) {
+            playerX += moveSpeed;
+            direction = 0;   // derecha
+            isMoving = true;
+        }
+        if (IsKeyDown(KEY_A)) {
+            playerX -= moveSpeed;
+            direction = 1;   // izquierda
+            isMoving = true;
+        }
 
-		// mapa debug
-		for (int y = 0; y < MAP_HEIGHT; y++) {
-			for (int x = 0; x < MAP_WIDTH; x++) {
-				if (map[y][x] == 1) {
-					DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, DARKGRAY);
-				}
-			}
-		}
+        // ----- Gravedad y salto -----
+        velocityY += GRAVITY;
+        playerY += velocityY;
 
-		// jugador
-		DrawRectangle((int)player.x, (int)player.y, 20, 20, RED);
+        // Colisión con el suelo (piso del mapa: fila MAP_HEIGHT-1)
+        int tileX = (int)(playerX + SPRING_WIDTH / 2) / TILE_SIZE;
+        int tileY = (int)(playerY + SPRING_HEIGHT) / TILE_SIZE;
+        if (tileY >= MAP_HEIGHT) tileY = MAP_HEIGHT - 1;
+        if (tileX >= 0 && tileX < MAP_WIDTH && tileY >= 0 && tileY < MAP_HEIGHT) {
+            if (map[tileY][tileX] == 1) {
+                // Ajustar posición arriba del tile
+                playerY = tileY * TILE_SIZE - SPRING_HEIGHT;
+                velocityY = 0;
+                isGrounded = true;
+            }
+            else {
+                isGrounded = false;
+            }
+        }
+        else {
+            isGrounded = false;
+        }
 
-		EndMode2D();
+        // Salto
+        if (isGrounded && IsKeyPressed(KEY_SPACE)) {
+            velocityY = JUMP_FORCE;
+            isGrounded = false;
+        }
 
-		// mensaje si falla la imagen
-		if (fondo.id == 0) {
-			DrawText("ERROR: No se cargo la imagen", 10, 10, 20, RED);
-		}
+        // Límites de pantalla (opcional, para no salirse del todo)
+        if (playerX < 0) playerX = 0;
+        if (playerX > SCREEN_WIDTH - SPRING_WIDTH) playerX = SCREEN_WIDTH - SPRING_WIDTH;
 
-		EndDrawing();
-	}
+        // Actualizar cámara (sigue al jugador)
+        camera.target = (Vector2){ playerX + SPRING_WIDTH / 2, playerY + SPRING_HEIGHT / 2 };
 
-	UnloadTexture(fondo);
-	CloseWindow();
+        // ----- Dibujar -----
+        BeginDrawing();
+        ClearBackground(BLACK);
 
-	return 0;
+        BeginMode2D(camera);
+
+        // 1. Dibujar fondo (textura)
+        DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
+
+        // 2. Dibujar mapa (tiles sólidos)
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            for (int x = 0; x < MAP_WIDTH; x++) {
+                if (map[y][x] == 1) {
+                    DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, DARKGRAY);
+                }
+            }
+        }
+
+        // 3. Dibujar jugador según estado (movimiento o quieto, dirección)
+        Rectangle sourceRect = { Spring.Frame * SPRING_WIDTH, 0, SPRING_WIDTH, SPRING_HEIGHT };
+        Rectangle destRect = { playerX, playerY, SPRING_WIDTH, SPRING_HEIGHT };
+        Vector2 origin = { 0, 0 };   // esquina superior izquierda
+
+        if (isMoving) {
+            if (direction == 0) {
+                DrawTexturePro(animR, sourceRect, destRect, origin, 0, WHITE);
+            }
+            else {
+                DrawTexturePro(animL, sourceRect, destRect, origin, 0, WHITE);
+            }
+        }
+        else {
+            // Quieto: usar textura idle según dirección
+            if (direction == 0) {
+                DrawTextureEx(rabbitIdleR, (Vector2) { playerX, playerY }, 0, 1.0f, WHITE);
+            }
+            else {
+                DrawTextureEx(rabbitIdleL, (Vector2) { playerX, playerY }, 0, 1.0f, WHITE);
+            }
+        }
+
+        EndMode2D();
+
+        // Mensaje de error si no se cargó el fondo
+        if (fondo.id == 0) {
+            DrawText("ERROR: No se cargo la imagen 'castlevania.png'", 10, 10, 20, RED);
+        }
+
+        EndDrawing();
+    }
+
+    // Liberar recursos
+    UnloadTexture(rabbitIdleR);
+    UnloadTexture(rabbitIdleL);
+    UnloadTexture(animR);
+    UnloadTexture(animL);
+    UnloadTexture(fondo);
+    CloseWindow();
+
+    return 0;
 }

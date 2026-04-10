@@ -44,10 +44,10 @@
     <Image Include="resources\OtherSide.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\wabbit_alpha.png">
+    <Image Include="resources\castelvania.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\castelvania.png">
+    <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>
