@@ -316,10 +316,14 @@
     <Image Include="resources\All Sprites.png" />
     <Image Include="resources\Anim_L.png" />
     <Image Include="resources\Anim_R.png" />
-    <Image Include="resources\Attack.png" />
+    <Image Include="resources\Attack_L - Rework.png" />
+    <Image Include="resources\Attack_L.png" />
+    <Image Include="resources\Attack_R.png" />
+    <Image Include="resources\Crouch_L.png" />
+    <Image Include="resources\Crouch_R.png" />
     <Image Include="resources\Idle_Sided.png" />
     <Image Include="resources\Idle.png" />
-    <Image Include="resources\Jump_R .png" />
+    <Image Include="resources\Jumper.png" />
     <Image Include="resources\Jump_L.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\wabbit_alpha.png" />

@@ -59,16 +59,28 @@
     <Image Include="resources\Walking_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\Attack.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
     <Image Include="resources\Idle_Sided.png">
       <Filter>Game Resource Files</Filter>
     </Image>
     <Image Include="resources\Walking_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\Jump_R .png">
+    <Image Include="resources\Jumper.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Crouch_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Crouch_R.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Attack_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Attack_R.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Attack_L - Rework.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>

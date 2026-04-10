@@ -19,7 +19,9 @@ struct Animation
 	int Frame /*= 0*/;
 	int Counter /*= 0*/;
 	int Speed /*= 5*/;
-} Spring;
+} Spring, Attacker;
+
+
 
 // Function to handle animation frame cycling
 void AnimationSettings()
@@ -31,6 +33,14 @@ void AnimationSettings()
 		Spring.Frame++;
 
 		if (Spring.Frame > 2) Spring.Frame = 0;
+	}
+	
+	Attacker.Counter++;
+	if (Attacker.Counter >= (100 / Attacker.Speed))
+	{
+		Attacker.Counter = 0;
+		Attacker.Frame++;
+		if (Attacker.Frame > 5) Attacker.Frame = 0;
 	}
 }
 
@@ -45,6 +55,7 @@ int main()
 	float vX = 1;  // Velocidad de movimiento horizontal constante
 	float y = 10;
 	Spring.Speed = 5;
+	Attacker.Speed = 5;
 
 	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
 	x = 200;
@@ -64,6 +75,8 @@ int main()
 	int startX = 0;              // Posición X cuando comenzó el salto
 	float horizontalSpeed = 0;   // Velocidad horizontal durante el salto (igual que vX)
 
+	bool Attack = false;
+
 	//---------------------------------------------------
 
 	//------------------Window--------------------
@@ -82,8 +95,14 @@ int main()
 	Texture AnimR = LoadTexture("Walking_R.png");
 	Texture AnimL = LoadTexture("Walking_L.png");
 
-	Texture JumpR = LoadTexture("Jump_R.png");
+	Texture JumpR = LoadTexture("Jumper.png");
 	Texture JumpL = LoadTexture("Jump_L.png");
+
+	Texture DuckR = LoadTexture("Crouch_R.png");
+	Texture DuckL = LoadTexture("Crouch_L.png");
+
+	Texture AttackR1 = LoadTexture("Attack_R.png");
+	Texture AttackL1 = LoadTexture("Attack_L.png");
 
 	//-----------------------------------------------
 
@@ -231,6 +250,7 @@ int main()
 			{
 				DrawTexture(Rabbit_O, x, y, WHITE);
 			}
+
 		}
 		// Dibujar sprite durante el salto
 		else if (isJumping)
@@ -247,6 +267,50 @@ int main()
 				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
 				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
 				DrawTexturePro(JumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+		}
+
+		// Dibujar sprite de agachar y cancelar movimiento
+		if (!isJumping)
+		{
+			if (Direction == 0 && IsKeyDown(KEY_LEFT_SHIFT))
+			{
+				canMove = false;
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(DuckR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+			else if (IsKeyDown(KEY_LEFT_SHIFT))
+			{
+				canMove = false;
+				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+				DrawTexturePro(DuckL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+			if (IsKeyUp(KEY_LEFT_SHIFT))
+			{
+				canMove = true;
+			}
+		}
+
+		//Dibujar Ataque Light
+		if (!isJumping)
+		{
+			if (Direction == 0 && IsKeyDown(KEY_E))
+			{
+				AnimationSettings();
+				canMove = false;
+				Rectangle source = (Rectangle){ Attacker.Frame * 44, 0, 44, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, 44, Spring_Height };
+				DrawTexturePro(AttackR1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+			}
+			else if (IsKeyDown(KEY_E))
+			{
+				AnimationSettings();
+				canMove = false;
+				Rectangle source = (Rectangle){ Attacker.Frame * 44, 0, 44, Spring_Height };
+				Rectangle dest = (Rectangle){ x, y, 43, Spring_Height };
+				DrawTexturePro(AttackL1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 			}
 		}
 
