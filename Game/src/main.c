@@ -1,24 +1,37 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-#include <stdlib.h>
+ï»¿#include <stdlib.h>
 #include <stdio.h>
 #include "raylib.h"
-#define Spring_Width 16
-#define Spring_Height 31
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+#include "resource_dir.h"
 
-// Structure for animation frames
-struct Animation
-{
-	int Frame /*= 0*/;
-	int Counter /*= 0*/;
-	int Speed /*= 5*/;
+#define SCREEN_WIDTH  800
+#define SCREEN_HEIGHT 450
+#define TILE_SIZE     34
+#define MAP_WIDTH     250
+#define MAP_HEIGHT    103
+
+
+int map[MAP_HEIGHT][MAP_WIDTH] = {
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+};
+
+#define SPRING_WIDTH  32
+#define SPRING_HEIGHT 32
+
+struct Animation {
+    int Frame;
+    int Counter;
+    int Speed;
 } Spring;
 
 // Function to handle animation frame cycling
@@ -50,25 +63,25 @@ int main()
 	x = 200;
 	y = 175;
 
-	float G = 0.1f;  // Gravedad reducida para caída más lenta y salto más alto
+	float G = 0.1f;  // Gravedad reducida para caï¿½da mï¿½s lenta y salto mï¿½s alto
 	int Floor = 200;
 	bool canMove = true;  // Puede moverse? (true = puede moverse, false = en el aire/saltando)
 
 	// Variables de salto
-	bool isJumping = false;      // Indica si el jugador está en el aire
+	bool isJumping = false;      // Indica si el jugador estï¿½ en el aire
 	int jumpDirection = 0;       // 0 = arriba, -1 = izquierda, 1 = derecha
 	float verticalSpeed = 0;     // Velocidad vertical actual
 	float initialJumpSpeed = -6.0f;  // Velocidad inicial para salto alto
 
 	// Variables para el movimiento horizontal durante el salto
-	int startX = 0;              // Posición X cuando comenzó el salto
+	int startX = 0;              // Posiciï¿½n X cuando comenzï¿½ el salto
 	float horizontalSpeed = 0;   // Velocidad horizontal durante el salto (igual que vX)
 
-	// Variables de la bola (obstáculo)
+	// Variables de la bola (obstï¿½culo)
 	float ballX = 400;           // Aparece desde la derecha (ancho de pantalla)
-	float ballY = Floor;         // Misma altura que el suelo (top de la colisión)
+	float ballY = Floor;         // Misma altura que el suelo (top de la colisiï¿½n)
 	float ballSpeed = 1.0f;      // Velocidad hacia la izquierda
-	bool playerActive = true;    // Si el personaje está activo (no colisionado)
+	bool playerActive = true;    // Si el personaje estï¿½ activo (no colisionado)
 
 	//---------------------------------------------------
 
@@ -96,7 +109,7 @@ int main()
 	//------------------Gameplay Loop--------------------
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
-		//------------------Actualización de la bola--------------------
+		//------------------Actualizaciï¿½n de la bola--------------------
 		// Mover la bola hacia la izquierda
 		ballX -= ballSpeed;
 		// Si sale completamente por la izquierda, reaparece por la derecha
@@ -104,7 +117,7 @@ int main()
 			ballX = screenWidth;
 		}
 
-		//------------------Movimiento del personaje (solo si está activo)--------------------
+		//------------------Movimiento del personaje (solo si estï¿½ activo)--------------------
 		if (playerActive) {
 			// Manejar el salto
 			if (canMove && !isJumping)
@@ -117,7 +130,7 @@ int main()
 					verticalSpeed = initialJumpSpeed;
 					startX = x;
 
-					// Determinar dirección y velocidad horizontal del salto
+					// Determinar direcciï¿½n y velocidad horizontal del salto
 					if (IsKeyDown(KEY_D))
 					{
 						jumpDirection = 1;  // Saltar derecha
@@ -138,7 +151,7 @@ int main()
 				}
 			}
 
-			// Física del salto
+			// Fï¿½sica del salto
 			if (isJumping)
 			{
 				// Actualizar velocidad vertical con gravedad
@@ -192,27 +205,27 @@ int main()
 					Direction = 1;
 				}
 
-				// Colisión con el suelo
+				// Colisiï¿½n con el suelo
 				if (y >= Floor)
 				{
 					y = Floor;
 				}
 			}
 
-			// Límites de la pantalla
+			// Lï¿½mites de la pantalla
 			if (x > screenWidth - 15) x = screenWidth - 15;
 			if (x < -5) x = -5;
 			if (y > screenHeight - 100) y = screenHeight - 100;
 		}
 
-		//------------------Colisión entre personaje y bola--------------------
+		//------------------Colisiï¿½n entre personaje y bola--------------------
 		if (playerActive) {
-			// Rectángulo del personaje (mismo tamaño que el sprite)
+			// Rectï¿½ngulo del personaje (mismo tamaï¿½o que el sprite)
 			Rectangle playerRect = { x, y, Spring_Width, Spring_Height };
-			// Rectángulo de la bola (mismo tamaño que el personaje)
+			// Rectï¿½ngulo de la bola (mismo tamaï¿½o que el personaje)
 			Rectangle ballRect = { ballX, ballY, Spring_Width, Spring_Height };
 
-			// Verificar colisión
+			// Verificar colisiï¿½n
 			if (CheckCollisionRecs(playerRect, ballRect)) {
 				playerActive = false;  // Desactivar personaje: desaparece por completo
 			}
@@ -224,17 +237,17 @@ int main()
 
 		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
 
-		// Dibujar la bola (círculo rojo con el mismo centro que su rectángulo de colisión)
+		// Dibujar la bola (cï¿½rculo rojo con el mismo centro que su rectï¿½ngulo de colisiï¿½n)
 		Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
 		float ballRadius = Spring_Width / 2.0f;
 		DrawCircleV(ballCenter, ballRadius, RED);
 
-		// Opcional: dibujar el rectángulo de colisión (descomentar para debug)
+		// Opcional: dibujar el rectï¿½ngulo de colisiï¿½n (descomentar para debug)
 		// DrawRectangleLines(ballX, ballY, Spring_Width, Spring_Height, GREEN);
 
-		// Dibujar el personaje solo si está activo
+		// Dibujar el personaje solo si estï¿½ activo
 		if (playerActive) {
-			// Dibujar animación cuando está en movimiento en el suelo
+			// Dibujar animaciï¿½n cuando estï¿½ en movimiento en el suelo
 			if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
 			{
 				AnimationSettings();
@@ -251,7 +264,7 @@ int main()
 					DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 				}
 			}
-			// Dibujar sprite estático cuando está quieto en el suelo
+			// Dibujar sprite estï¿½tico cuando estï¿½ quieto en el suelo
 			else if (canMove && !isJumping)
 			{
 				if (Direction == 0)
@@ -282,7 +295,7 @@ int main()
 			}
 		}
 		else {
-			// Si el personaje está desactivado, mostrar mensaje de Game Over
+			// Si el personaje estï¿½ desactivado, mostrar mensaje de Game Over
 			DrawText("GAME OVER", screenWidth / 2 - 60, screenHeight / 2, 30, RED);
 		}
 
