@@ -9,8 +9,8 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <stdlib.h>
 #include <stdio.h>
 #include "raylib.h"
-#define Spring_Width 16
-#define Spring_Height 31
+#define Spring_Width 72 //16
+#define Spring_Height 32
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
 // Structure for animation frames
@@ -102,7 +102,10 @@ int main()
 	Texture DuckL = LoadTexture("Crouch_L.png");
 
 	Texture AttackR1 = LoadTexture("Attack_R.png");
-	Texture AttackL1 = LoadTexture("Attack_L.png");
+	Texture AttackL1 = LoadTexture("Attack_L - Rework.png");
+
+	Texture AttackR1_Crouch = LoadTexture("C_A_R.png");
+	Texture AttackL1_Crouch = LoadTexture("C_A_L.png");
 
 	//-----------------------------------------------
 
@@ -273,14 +276,14 @@ int main()
 		// Dibujar sprite de agachar y cancelar movimiento
 		if (!isJumping)
 		{
-			if (Direction == 0 && IsKeyDown(KEY_LEFT_SHIFT))
+			if (Direction == 0 && IsKeyDown(KEY_LEFT_SHIFT) && !IsKeyDown(KEY_E))
 			{
 				canMove = false;
 				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
 				Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
 				DrawTexturePro(DuckR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 			}
-			else if (IsKeyDown(KEY_LEFT_SHIFT))
+			else if (IsKeyDown(KEY_LEFT_SHIFT) && !IsKeyDown(KEY_E))
 			{
 				canMove = false;
 				Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
@@ -298,19 +301,41 @@ int main()
 		{
 			if (Direction == 0 && IsKeyDown(KEY_E))
 			{
-				AnimationSettings();
-				canMove = false;
-				Rectangle source = (Rectangle){ Attacker.Frame * 44, 0, 44, Spring_Height };
-				Rectangle dest = (Rectangle){ x, y, 44, Spring_Height };
-				DrawTexturePro(AttackR1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				if (IsKeyDown(KEY_LEFT_SHIFT))
+				{
+					AnimationSettings();
+					canMove = false;
+					Rectangle source = (Rectangle){ Attacker.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AttackR1_Crouch, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+				else
+				{
+					AnimationSettings();
+					canMove = false;
+					Rectangle source = (Rectangle){ Attacker.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AttackR1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
 			}
 			else if (IsKeyDown(KEY_E))
 			{
-				AnimationSettings();
-				canMove = false;
-				Rectangle source = (Rectangle){ Attacker.Frame * 44, 0, 44, Spring_Height };
-				Rectangle dest = (Rectangle){ x, y, 43, Spring_Height };
-				DrawTexturePro(AttackL1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				if (IsKeyDown(KEY_LEFT_SHIFT))
+				{
+					AnimationSettings();
+					canMove = false;
+					Rectangle source = (Rectangle){ Attacker.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AttackL1_Crouch, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+				else
+				{
+					AnimationSettings();
+					canMove = false;
+					Rectangle source = (Rectangle){ Attacker.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AttackL1, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
 			}
 		}
 

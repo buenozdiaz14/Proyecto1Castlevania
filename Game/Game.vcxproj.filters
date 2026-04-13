@@ -80,7 +80,10 @@
     <Image Include="resources\Attack_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\Attack_L - Rework.png">
+    <Image Include="resources\C_A_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\C_A_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>
