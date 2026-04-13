@@ -207,7 +207,7 @@ int fondo(void)
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Castlevania Demo");
 
 	// 📸 Cargar imagen
-	Texture2D fondo = LoadTexture("resources/castlevania.png");
+	Texture2D fondo = LoadTexture("castelvania.png");
 
 	// comprobar si cargó
 	if (fondo.id == 0) {
@@ -240,7 +240,7 @@ int fondo(void)
 		BeginMode2D(camera);
 
 		// 🖼️ fondo (nivel)
-		DrawTextureEx(fondo, (Vector2) { 0.0f, 0.0f }, 0.0f, 2.0f, WHITE);
+		DrawTextureEx(fondo, (Vector2) { 30.0f, 30.0f }, 0.0f, 2.0f, WHITE);
 
 		// mapa debug
 		for (int y = 0; y < MAP_HEIGHT; y++) {
