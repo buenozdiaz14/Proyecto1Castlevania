@@ -28,6 +28,9 @@ int map[MAP_HEIGHT][MAP_WIDTH] = {
 #define SPRING_WIDTH  32
 #define SPRING_HEIGHT 32
 
+#define Spring_Width  32
+#define Spring_Height 32
+
 struct Animation {
     int Frame;
     int Counter;
@@ -232,10 +235,6 @@ int main()
 		}
 
 		//------------------Dibujado--------------------
-		BeginDrawing();
-		ClearBackground(BLACK);
-
-		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
 
 		// Dibujar la bola (c�rculo rojo con el mismo centro que su rect�ngulo de colisi�n)
 		Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
