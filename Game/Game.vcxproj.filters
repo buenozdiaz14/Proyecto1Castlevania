@@ -28,6 +28,9 @@
     <None Include="src\icon.ico">
       <Filter>Windows Resource Files</Filter>
     </None>
+    <None Include="resources\001.midi">
+      <Filter>Game Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\application.rc">
@@ -74,5 +77,10 @@
     <Image Include="resources\Zombie_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\001.mp3">
+      <Filter>Game Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

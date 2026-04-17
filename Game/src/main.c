@@ -11,7 +11,7 @@ int main() {
     InitAudioDevice();
 
 
-    Music musicaFondo = LoadMusicStream("musica.mp3");
+    Music musicaFondo = LoadMusicStream("001.mp3");
     PlayMusicStream(musicaFondo);
 
     GameScreen currentScreen = MENU;

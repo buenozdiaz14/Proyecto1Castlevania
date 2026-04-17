@@ -307,6 +307,7 @@
     <ClCompile Include="src\main.c" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\001.midi" />
     <None Include="src\icon.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -331,6 +332,9 @@
     <ProjectReference Include="raylib.vcxproj">
       <Project>{8898EA18-743A-15EF-5DF5-284349369C3F}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\001.mp3" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
