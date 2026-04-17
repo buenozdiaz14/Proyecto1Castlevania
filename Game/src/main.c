@@ -19,7 +19,7 @@ struct Animation
 	int Frame /*= 0*/;
 	int Counter /*= 0*/;
 	int Speed /*= 5*/;
-} Spring;
+} Spring, Enemy;
 
 // Function to handle animation frame cycling
 void AnimationSettings()
@@ -31,6 +31,15 @@ void AnimationSettings()
 		Spring.Frame++;
 
 		if (Spring.Frame > 2) Spring.Frame = 0;
+	}
+
+	Enemy.Counter++;
+	if (Enemy.Counter >= (100 / Enemy.Speed))
+	{
+		Enemy.Counter = 0;
+		Enemy.Frame++;
+
+		if (Enemy.Frame > 2) Enemy.Frame = 0;
 	}
 }
 
@@ -45,6 +54,7 @@ int main()
 	float vX = 1;  // Velocidad de movimiento horizontal constante
 	float y = 10;
 	Spring.Speed = 5;
+	Enemy.Speed = 7;
 
 	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
 	x = 200;
@@ -90,6 +100,8 @@ int main()
 
 	Texture JumpR = LoadTexture("Jump_R.png");
 	Texture JumpL = LoadTexture("Jump_L.png");
+
+	Texture CreatureL = LoadTexture("Zombie_L.png");
 
 	//-----------------------------------------------
 
@@ -227,7 +239,10 @@ int main()
 		// Dibujar la bola (círculo rojo con el mismo centro que su rectángulo de colisión)
 		Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
 		float ballRadius = Spring_Width / 2.0f;
-		DrawCircleV(ballCenter, ballRadius, RED);
+		AnimationSettings();
+		Rectangle source = (Rectangle){ Enemy.Frame * 16.5, 0, Spring_Width, Spring_Height };
+		Rectangle dest = (Rectangle){ ballX, ballY, Spring_Width, Spring_Height };
+		DrawTexturePro(CreatureL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 
 		// Opcional: dibujar el rectángulo de colisión (descomentar para debug)
 		// DrawRectangleLines(ballX, ballY, Spring_Width, Spring_Height, GREEN);
@@ -237,7 +252,6 @@ int main()
 			// Dibujar animación cuando está en movimiento en el suelo
 			if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
 			{
-				AnimationSettings();
 				if (IsKeyDown(KEY_D))
 				{
 					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
@@ -266,7 +280,7 @@ int main()
 			// Dibujar sprite durante el salto
 			else if (isJumping)
 			{
-				AnimationSettings();
+				
 				if (Direction == 0)
 				{
 					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
