@@ -11,7 +11,10 @@ int main() {
     InitAudioDevice();
 
 
-    Music musicaFondo = LoadMusicStream("001.wav");
+    Music musicaFondo = LoadMusicStream("resources/001.mp3");
+    SetMasterVolume(1.0f);
+    SetMusicVolume(musicaFondo, 1.0f);
+    SetMusicPan(musicaFondo, 1.0f);
     PlayMusicStream(musicaFondo);
 
     GameScreen currentScreen = MENU;
@@ -24,7 +27,7 @@ int main() {
     Rectangle sliderBarra = { screenWidth / 2.0f - 150, 300, 300, 30 };
 
 
-    SetMusicVolume(musicaFondo, volumenMusica);
+    /*SetMusicVolume(musicaFondo, volumenMusica);*/
 
     SetTargetFPS(60);
 
