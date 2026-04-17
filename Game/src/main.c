@@ -427,7 +427,7 @@ int main() {
     UnloadTexture(idleL);
     UnloadTexture(walkR);
     UnloadTexture(walkL);
-    UnloadTexture(jumpR);
+    UnloadTexture(jumpR);   
     UnloadTexture(jumpL);
     UnloadTexture(enemyTex);
     UnloadTexture(fondo);
