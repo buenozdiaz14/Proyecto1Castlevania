@@ -82,5 +82,8 @@
     <Media Include="resources\001.mp3">
       <Filter>Game Resource Files</Filter>
     </Media>
+    <Media Include="resources\001.wav">
+      <Filter>Game Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

@@ -335,6 +335,7 @@
   </ItemGroup>
   <ItemGroup>
     <Media Include="resources\001.mp3" />
+    <Media Include="resources\001.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
