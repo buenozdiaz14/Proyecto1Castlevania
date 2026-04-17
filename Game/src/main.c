@@ -23,10 +23,10 @@ typedef enum GameState {
 // Structure for animation frames
 struct Animation
 {
-    int Frame /*= 0*/;
-    int Counter /*= 0*/;
-    int Speed /*= 5*/;
-} Spring;
+	int Frame /*= 0*/;
+	int Counter /*= 0*/;
+	int Speed /*= 5*/;
+} Spring, Enemy;
 
 // Function to handle animation frame cycling
 void AnimationSettings()
@@ -37,11 +37,20 @@ void AnimationSettings()
         Spring.Counter = 0;
         Spring.Frame++;
 
-        if (Spring.Frame > 2) Spring.Frame = 0;
-    }
+		if (Spring.Frame > 2) Spring.Frame = 0;
+	}
+
+	Enemy.Counter++;
+	if (Enemy.Counter >= (100 / Enemy.Speed))
+	{
+		Enemy.Counter = 0;
+		Enemy.Frame++;
+
+		if (Enemy.Frame > 2) Enemy.Frame = 0;
+	}
 }
 
-// Función para reiniciar todas las variables del juego
+// Funciï¿½n para reiniciar todas las variables del juego
 void ResetGame(float* x, float* y, float* ballX, float* ballY,
     bool* playerActive, bool* isJumping, int* jumpDirection,
     float* verticalSpeed, float* horizontalSpeed, bool* canMove,
@@ -64,8 +73,41 @@ void ResetGame(float* x, float* y, float* ballX, float* ballY,
 
 int main()
 {
-    //------------------Miscellaneous--------------------
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+	//------------------Miscellaneous--------------------
+	// Tell the window to use vsync and work on high DPI displays
+	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+
+	float x = 0;
+	float vX = 1;  // Velocidad de movimiento horizontal constante
+	float y = 10;
+	Spring.Speed = 5;
+	Enemy.Speed = 7;
+
+	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
+	x = 200;
+	y = 175;
+
+	float G = 0.1f;  // Gravedad reducida para caï¿½da mï¿½s lenta y salto mï¿½s alto
+	int Floor = 200;
+	bool canMove = true;  // Puede moverse? (true = puede moverse, false = en el aire/saltando)
+
+	// Variables de salto
+	bool isJumping = false;      // Indica si el jugador estï¿½ en el aire
+	int jumpDirection = 0;       // 0 = arriba, -1 = izquierda, 1 = derecha
+	float verticalSpeed = 0;     // Velocidad vertical actual
+	float initialJumpSpeed = -6.0f;  // Velocidad inicial para salto alto
+
+	// Variables para el movimiento horizontal durante el salto
+	int startX = 0;              // Posiciï¿½n X cuando comenzï¿½ el salto
+	float horizontalSpeed = 0;   // Velocidad horizontal durante el salto (igual que vX)
+
+	// Variables de la bola (obstï¿½culo)
+	float ballX = 400;           // Aparece desde la derecha (ancho de pantalla)
+	float ballY = Floor;         // Misma altura que el suelo (top de la colisiï¿½n)
+	float ballSpeed = 1.0f;      // Velocidad hacia la izquierda
+	bool playerActive = true;    // Si el personaje estï¿½ activo (no colisionado)
+
+	//---------------------------------------------------
 
     //------------------Window--------------------
     int screenWidth = 400; //X
@@ -83,53 +125,22 @@ int main()
     Texture AnimR = LoadTexture("Walking_R.png");
     Texture AnimL = LoadTexture("Walking_L.png");
 
-    Texture JumpR = LoadTexture("Jump_R.png");
-    Texture JumpL = LoadTexture("Jump_L.png");
-    //-----------------------------------------------
+	Texture JumpR = LoadTexture("Jump_R.png");
+	Texture JumpL = LoadTexture("Jump_L.png");
 
-    // Variables de juego
-    float x, y;
-    float vX = 1.0f;  // Velocidad de movimiento horizontal constante
-    float G = 0.1f;   // Gravedad
-    int Floor = 200;  // Altura del suelo (donde apoya el personaje)
-    bool canMove = true;
+	Texture CreatureL = LoadTexture("Zombie_L.png");
 
-    // Variables de salto
-    bool isJumping = false;
-    int jumpDirection = 0;
-    float verticalSpeed = 0;
-    float initialJumpSpeed = -6.0f;
-    float horizontalSpeed = 0;
-    int startX = 0;
-
-    // Variables de dirección del sprite
-    int Direction = 0;  // 0 = derecha, 1 = izquierda
-
-    // Variables de la bola (enemigo)
-    float ballX, ballY;
-    float ballSpeed = 1.0f;
-    bool playerActive = true;
-
-    // Estado inicial del juego (menú)
-    GameState gameState = MENU;
-    int menuSelection = 0;       // 0 = Play, 1 = Exit (menú principal)
-    int gameOverSelection = 0;   // 0 = Try Again, 1 = Exit (game over)
-
-    // Inicializar variables del juego
-    ResetGame(&x, &y, &ballX, &ballY, &playerActive, &isJumping, &jumpDirection,
-        &verticalSpeed, &horizontalSpeed, &canMove, &Direction, screenWidth, Floor);
-
-    Spring.Speed = 5;
+	//-----------------------------------------------
 
     //------------------Gameplay Loop--------------------
     while (!WindowShouldClose())		// Detecta ESC o cierre de ventana
     {
-        //------------------Actualización según estado--------------------
+        //------------------Actualizaciï¿½n segï¿½n estado--------------------
         switch (gameState)
         {
         case MENU:
         {
-            // Navegación con teclado
+            // Navegaciï¿½n con teclado
             if (IsKeyPressed(KEY_UP)) {
                 menuSelection--;
                 if (menuSelection < 0) menuSelection = 1;
@@ -139,7 +150,7 @@ int main()
                 if (menuSelection > 1) menuSelection = 0;
             }
 
-            // Selección con Enter
+            // Selecciï¿½n con Enter
             if (IsKeyPressed(KEY_ENTER)) {
                 if (menuSelection == 0) {
                     gameState = PLAYING;
@@ -147,14 +158,14 @@ int main()
                         &verticalSpeed, &horizontalSpeed, &canMove, &Direction, screenWidth, Floor);
                 }
                 else if (menuSelection == 1) {
-                    break;  // Saldrá del bucle principal (WindowShouldClose se pondrá true)
+                    break;  // Saldrï¿½ del bucle principal (WindowShouldClose se pondrï¿½ true)
                 }
             }
 
-            // Interacción con ratón
+            // Interacciï¿½n con ratï¿½n
             Vector2 mousePos = GetMousePosition();
 
-            // Definir áreas para los textos (Play y Exit)
+            // Definir ï¿½reas para los textos (Play y Exit)
             Rectangle playBtn = { screenWidth / 2.0f - 50, screenHeight / 2.0f - 20, 100, 30 };
             Rectangle exitBtn = { screenWidth / 2.0f - 50, screenHeight / 2.0f + 20, 100, 30 };
 
@@ -177,13 +188,13 @@ int main()
 
         case PLAYING:
         {
-            //------------------Actualización de la bola--------------------
+            //------------------Actualizaciï¿½n de la bola--------------------
             ballX -= ballSpeed;
             if (ballX + Spring_Width < 0) {
                 ballX = screenWidth;
             }
 
-            //------------------Movimiento del personaje (solo si está activo)--------------------
+            //------------------Movimiento del personaje (solo si estï¿½ activo)--------------------
             if (playerActive) {
                 // Manejar el salto
                 if (canMove && !isJumping)
@@ -215,7 +226,7 @@ int main()
                     }
                 }
 
-                // Física del salto
+                // Fï¿½sica del salto
                 if (isJumping)
                 {
                     verticalSpeed += G + 0.02f;
@@ -262,13 +273,13 @@ int main()
                         y = Floor;
                 }
 
-                // Límites de pantalla
+                // Lï¿½mites de pantalla
                 if (x > screenWidth - 15) x = screenWidth - 15;
                 if (x < -5) x = -5;
                 if (y > screenHeight - 100) y = screenHeight - 100;
             }
 
-            //------------------Colisión entre personaje y bola--------------------
+            //------------------Colisiï¿½n entre personaje y bola--------------------
             if (playerActive) {
                 Rectangle playerRect = { x, y, Spring_Width, Spring_Height };
                 Rectangle ballRect = { ballX, ballY, Spring_Width, Spring_Height };
@@ -284,7 +295,7 @@ int main()
 
         case GAMEOVER:
         {
-            // Navegación con teclado
+            // Navegaciï¿½n con teclado
             if (IsKeyPressed(KEY_UP)) {
                 gameOverSelection--;
                 if (gameOverSelection < 0) gameOverSelection = 1;
@@ -294,7 +305,7 @@ int main()
                 if (gameOverSelection > 1) gameOverSelection = 0;
             }
 
-            // Selección con Enter
+            // Selecciï¿½n con Enter
             if (IsKeyPressed(KEY_ENTER)) {
                 if (gameOverSelection == 0) {
                     // Try Again
@@ -303,11 +314,11 @@ int main()
                         &verticalSpeed, &horizontalSpeed, &canMove, &Direction, screenWidth, Floor);
                 }
                 else if (gameOverSelection == 1) {
-                    break;  // Exit -> cierra aplicación
+                    break;  // Exit -> cierra aplicaciï¿½n
                 }
             }
 
-            // Interacción con ratón
+            // Interacciï¿½n con ratï¿½n
             Vector2 mousePos = GetMousePosition();
 
             Rectangle tryAgainBtn = { screenWidth / 2.0f - 60, screenHeight / 2.0f + 10, 120, 30 };
@@ -339,7 +350,7 @@ int main()
         {
         case MENU:
         {
-            // Título centrado
+            // Tï¿½tulo centrado
             const char* title = "CASTLEVANIA";
             int titleFontSize = 30;
             int titleWidth = MeasureText(title, titleFontSize);
@@ -371,56 +382,69 @@ int main()
             // Mensaje (opcional, puedes quitarlo)
             DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
 
-            // Dibujar la bola (círculo rojo)
-            Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
-            float ballRadius = Spring_Width / 2.0f;
-            DrawCircleV(ballCenter, ballRadius, RED);
+		// Dibujar la bola (cï¿½rculo rojo con el mismo centro que su rectï¿½ngulo de colisiï¿½n)
+		Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
+		float ballRadius = Spring_Width / 2.0f;
+		AnimationSettings();
+		Rectangle source = (Rectangle){ Enemy.Frame * 16.5, 0, Spring_Width, Spring_Height };
+		Rectangle dest = (Rectangle){ ballX, ballY, Spring_Width, Spring_Height };
+		DrawTexturePro(CreatureL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
 
-            // Dibujar el personaje solo si está activo
-            if (playerActive) {
-                // Animación al caminar en el suelo
-                if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
-                {
-                    AnimationSettings();
-                    if (IsKeyDown(KEY_D))
-                    {
-                        Rectangle source = { Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-                        Rectangle dest = { x, y, Spring_Width, Spring_Height };
-                        DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    }
-                    else if (IsKeyDown(KEY_A))
-                    {
-                        Rectangle source = { Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-                        Rectangle dest = { x, y, Spring_Width, Spring_Height };
-                        DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    }
-                }
-                // Quieto en el suelo
-                else if (canMove && !isJumping)
-                {
-                    if (Direction == 0)
-                        DrawTexture(Rabbit, x, y, WHITE);
-                    else
-                        DrawTexture(Rabbit_O, x, y, WHITE);
-                }
-                // Durante el salto
-                else if (isJumping)
-                {
-                    AnimationSettings();
-                    if (Direction == 0)
-                    {
-                        Rectangle source = { Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-                        Rectangle dest = { x, y, Spring_Width, Spring_Height };
-                        DrawTexturePro(JumpR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    }
-                    else
-                    {
-                        Rectangle source = { Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-                        Rectangle dest = { x, y, Spring_Width, Spring_Height };
-                        DrawTexturePro(JumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    }
-                }
-            }
+		// Opcional: dibujar el rectï¿½ngulo de colisiï¿½n (descomentar para debug)
+		// DrawRectangleLines(ballX, ballY, Spring_Width, Spring_Height, GREEN);
+
+		// Dibujar el personaje solo si estï¿½ activo
+		if (playerActive) {
+			// Dibujar animaciï¿½n cuando estï¿½ en movimiento en el suelo
+			if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
+			{
+				if (IsKeyDown(KEY_D))
+				{
+					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+				else if (IsKeyDown(KEY_A))
+				{
+					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+			}
+			// Dibujar sprite estï¿½tico cuando estï¿½ quieto en el suelo
+			else if (canMove && !isJumping)
+			{
+				if (Direction == 0)
+				{
+					DrawTexture(Rabbit, x, y, WHITE);
+				}
+				else
+				{
+					DrawTexture(Rabbit_O, x, y, WHITE);
+				}
+			}
+			// Dibujar sprite durante el salto
+			else if (isJumping)
+			{
+				
+				if (Direction == 0)
+				{
+					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(JumpR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+				else
+				{
+					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
+					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
+					DrawTexturePro(JumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+				}
+			}
+		}
+		else {
+			// Si el personaje estï¿½ desactivado, mostrar mensaje de Game Over
+			DrawText("GAME OVER", screenWidth / 2 - 60, screenHeight / 2, 30, RED);
+		}
 
             // Dibujar el suelo
             DrawRectangle(0, 233, screenWidth, 10, WHITE);

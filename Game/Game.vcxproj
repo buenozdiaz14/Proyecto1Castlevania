@@ -325,6 +325,7 @@
     <Image Include="resources\wabbit_alpha.png" />
     <Image Include="resources\Walking_L.png" />
     <Image Include="resources\Walking_R.png" />
+    <Image Include="resources\Zombie_L.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="raylib.vcxproj">
