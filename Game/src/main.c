@@ -1,317 +1,122 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-#include <stdlib.h>
-#include <stdio.h>
 #include "raylib.h"
-#define Spring_Width 16
-#define Spring_Height 31
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
-// Structure for animation frames
-struct Animation
-{
-	int Frame /*= 0*/;
-	int Counter /*= 0*/;
-	int Speed /*= 5*/;
-} Spring, Enemy;
+typedef enum GameScreen { MENU = 0, JUGAR, OPCIONES } GameScreen;
 
-// Function to handle animation frame cycling
-void AnimationSettings()
-{
-	Spring.Counter++;
-	if (Spring.Counter >= (100 / Spring.Speed))
-	{
-		Spring.Counter = 0;
-		Spring.Frame++;
+int main() {
+    const int screenWidth = 800;
+    const int screenHeight = 600;
+    InitWindow(screenWidth, screenHeight, "Mi Juego - Menu Principal");
 
-		if (Spring.Frame > 2) Spring.Frame = 0;
-	}
 
-	Enemy.Counter++;
-	if (Enemy.Counter >= (100 / Enemy.Speed))
-	{
-		Enemy.Counter = 0;
-		Enemy.Frame++;
+    InitAudioDevice();
 
-		if (Enemy.Frame > 2) Enemy.Frame = 0;
-	}
+
+    Music musicaFondo = LoadMusicStream("musica.mp3");
+    PlayMusicStream(musicaFondo);
+
+    GameScreen currentScreen = MENU;
+    Rectangle btnJugar = { screenWidth / 2.0f - 100, 200, 200, 50 };
+    Rectangle btnOpcion = { screenWidth / 2.0f - 100, 300, 200, 50 };
+    Rectangle btnSalir = { screenWidth / 2.0f - 100, 400, 200, 50 };
+
+    float volumenMusica = 0.5f;
+    bool arrastrandoSlider = false;
+    Rectangle sliderBarra = { screenWidth / 2.0f - 150, 300, 300, 30 };
+
+
+    SetMusicVolume(musicaFondo, volumenMusica);
+
+    SetTargetFPS(60);
+
+    while (!WindowShouldClose()) {
+
+        UpdateMusicStream(musicaFondo);
+
+        Vector2 mousePoint = GetMousePosition();
+
+        if (currentScreen == MENU) {
+            if (CheckCollisionPointRec(mousePoint, btnJugar) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) currentScreen = JUGAR;
+            if (CheckCollisionPointRec(mousePoint, btnOpcion) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) currentScreen = OPCIONES;
+            if (CheckCollisionPointRec(mousePoint, btnSalir) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) break;
+        }
+        else if (currentScreen == OPCIONES) {
+            if (IsKeyPressed(KEY_ESCAPE)) currentScreen = MENU;
+
+            Rectangle sliderBoton = { sliderBarra.x + (volumenMusica * sliderBarra.width) - 15, sliderBarra.y - 10, 30, 50 };
+
+            if ((CheckCollisionPointRec(mousePoint, sliderBarra) || CheckCollisionPointRec(mousePoint, sliderBoton)) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                arrastrandoSlider = true;
+            }
+
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+                arrastrandoSlider = false;
+            }
+
+            if (arrastrandoSlider) {
+                volumenMusica = (mousePoint.x - sliderBarra.x) / sliderBarra.width;
+
+                if (volumenMusica < 0.0f) volumenMusica = 0.0f;
+                if (volumenMusica > 1.0f) volumenMusica = 1.0f;
+
+
+                SetMusicVolume(musicaFondo, volumenMusica);
+            }
+        }
+        else {
+            if (IsKeyPressed(KEY_ESCAPE)) currentScreen = MENU;
+        }
+
+
+        BeginDrawing();
+
+        if (currentScreen == MENU) {
+            ClearBackground(BLACK);
+            const char* textoTitulo = "MENU PRINCIPAL";
+            DrawText(textoTitulo, (screenWidth - MeasureText(textoTitulo, 60)) / 2, 80, 60, GOLD);
+
+            Color colJugar = CheckCollisionPointRec(mousePoint, btnJugar) ? DARKGRAY : LIGHTGRAY;
+            DrawRectangleRec(btnJugar, colJugar);
+            DrawText("JUGAR", btnJugar.x + 60, btnJugar.y + 15, 20, BLACK);
+
+            Color colOpcion = CheckCollisionPointRec(mousePoint, btnOpcion) ? DARKGRAY : LIGHTGRAY;
+            DrawRectangleRec(btnOpcion, colOpcion);
+            DrawText("OPCIONES", btnOpcion.x + 50, btnOpcion.y + 15, 20, BLACK);
+
+            Color colSalir = CheckCollisionPointRec(mousePoint, btnSalir) ? DARKGRAY : LIGHTGRAY;
+            DrawRectangleRec(btnSalir, colSalir);
+            DrawText("SALIR", btnSalir.x + 70, btnSalir.y + 15, 20, BLACK);
+
+        }
+        else if (currentScreen == JUGAR) {
+            ClearBackground(RAYWHITE);
+            DrawText("ESTAS JUGANDO!", 200, 250, 30, MAROON);
+        }
+        else if (currentScreen == OPCIONES) {
+            ClearBackground(RAYWHITE);
+            DrawText("PANTALLA DE OPCIONES", screenWidth / 2 - 180, 100, 30, DARKBLUE);
+            DrawText("VOLUMEN DE MUSICA", sliderBarra.x, sliderBarra.y - 30, 20, BLACK);
+
+            DrawRectangleRec(sliderBarra, DARKGRAY);
+            Rectangle barraLlena = { sliderBarra.x, sliderBarra.y, sliderBarra.width * volumenMusica, sliderBarra.height };
+            DrawRectangleRec(barraLlena, LIME);
+            DrawRectangleLinesEx(sliderBarra, 2, BLACK);
+
+            Rectangle sliderBoton = { sliderBarra.x + (volumenMusica * sliderBarra.width) - 15, sliderBarra.y - 10, 30, 50 };
+            DrawRectangleRec(sliderBoton, DARKGREEN);
+            DrawRectangleLinesEx(sliderBoton, 2, BLACK);
+
+            int porcentaje = (int)(volumenMusica * 100);
+            DrawText(TextFormat("%i%%", porcentaje), sliderBarra.x + sliderBarra.width + 20, sliderBarra.y + 5, 20, BLACK);
+        }
+
+        EndDrawing();
+    }
+
+
+    UnloadMusicStream(musicaFondo);
+    CloseAudioDevice();
+
+    CloseWindow();
+    return 0;
 }
 
-
-int main()
-{
-	//------------------Miscellaneous--------------------
-	// Tell the window to use vsync and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-
-	float x = 0;
-	float vX = 1;  // Velocidad de movimiento horizontal constante
-	float y = 10;
-	Spring.Speed = 5;
-	Enemy.Speed = 7;
-
-	bool Direction = 0;  // 0 = mirando derecha, 1 = mirando izquierda
-	x = 200;
-	y = 175;
-
-	float G = 0.1f;  // Gravedad reducida para caída más lenta y salto más alto
-	int Floor = 200;
-	bool canMove = true;  // Puede moverse? (true = puede moverse, false = en el aire/saltando)
-
-	// Variables de salto
-	bool isJumping = false;      // Indica si el jugador está en el aire
-	int jumpDirection = 0;       // 0 = arriba, -1 = izquierda, 1 = derecha
-	float verticalSpeed = 0;     // Velocidad vertical actual
-	float initialJumpSpeed = -6.0f;  // Velocidad inicial para salto alto
-
-	// Variables para el movimiento horizontal durante el salto
-	int startX = 0;              // Posición X cuando comenzó el salto
-	float horizontalSpeed = 0;   // Velocidad horizontal durante el salto (igual que vX)
-
-	// Variables de la bola (obstáculo)
-	float ballX = 400;           // Aparece desde la derecha (ancho de pantalla)
-	float ballY = Floor;         // Misma altura que el suelo (top de la colisión)
-	float ballSpeed = 1.0f;      // Velocidad hacia la izquierda
-	bool playerActive = true;    // Si el personaje está activo (no colisionado)
-
-	//---------------------------------------------------
-
-	//------------------Window--------------------
-	int screenWidth = 400; //X
-	int screenHeight = 350; //Y
-
-	InitWindow(screenWidth, screenHeight, "_C4STL3V4N14_");
-	//---------------------------------------------
-
-	//------------------Textures--------------------
-	SearchAndSetResourceDir("resources"); // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-
-	Texture Rabbit = LoadTexture("Idle.png");
-	Texture Rabbit_O = LoadTexture("Idle_Sided.png");
-
-	Texture AnimR = LoadTexture("Walking_R.png");
-	Texture AnimL = LoadTexture("Walking_L.png");
-
-	Texture JumpR = LoadTexture("Jump_R.png");
-	Texture JumpL = LoadTexture("Jump_L.png");
-
-	Texture CreatureL = LoadTexture("Zombie_L.png");
-
-	//-----------------------------------------------
-
-	//------------------Gameplay Loop--------------------
-	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
-	{
-		//------------------Actualización de la bola--------------------
-		// Mover la bola hacia la izquierda
-		ballX -= ballSpeed;
-		// Si sale completamente por la izquierda, reaparece por la derecha
-		if (ballX + Spring_Width < 0) {
-			ballX = screenWidth;
-		}
-
-		//------------------Movimiento del personaje (solo si está activo)--------------------
-		if (playerActive) {
-			// Manejar el salto
-			if (canMove && !isJumping)
-			{
-				// Verificar si se presiona SPACE para saltar
-				if (IsKeyPressed(KEY_SPACE))
-				{
-					isJumping = true;
-					canMove = false;
-					verticalSpeed = initialJumpSpeed;
-					startX = x;
-
-					// Determinar dirección y velocidad horizontal del salto
-					if (IsKeyDown(KEY_D))
-					{
-						jumpDirection = 1;  // Saltar derecha
-						Direction = 0;
-						horizontalSpeed = vX + 1.5;  // Misma velocidad que caminando
-					}
-					else if (IsKeyDown(KEY_A))
-					{
-						jumpDirection = -1;  // Saltar izquierda
-						Direction = 1;
-						horizontalSpeed = vX + 1.5;  // Misma velocidad que caminando
-					}
-					else
-					{
-						jumpDirection = 0;  // Saltar recto
-						horizontalSpeed = 0;
-					}
-				}
-			}
-
-			// Física del salto
-			if (isJumping)
-			{
-				// Actualizar velocidad vertical con gravedad
-				verticalSpeed += G + 0.02;
-				y += (float)verticalSpeed;
-
-				// Movimiento horizontal DURANTE EL SALTO
-				if (jumpDirection == 1)
-				{
-					x += (float)horizontalSpeed;
-				}
-				else if (jumpDirection == -1)
-				{
-					x -= (float)horizontalSpeed;
-				}
-
-				// Verificar si ha llegado al suelo
-				if (y >= Floor)
-				{
-					y = Floor;
-					isJumping = false;
-					canMove = true;
-					verticalSpeed = 0;
-					jumpDirection = 0;
-					horizontalSpeed = 0;
-				}
-
-				// Evitar que pase el techo
-				if (y < 0)
-				{
-					y = 0;
-					verticalSpeed = 0;
-				}
-			}
-
-			// Movimiento en el suelo
-			if (canMove && !isJumping)
-			{
-				// Aplicar gravedad para caer de plataformas
-				y = y + (float)G;
-
-				// Movimiento horizontal (velocidad vX)
-				if (IsKeyDown(KEY_D))
-				{
-					x = x + vX;
-					Direction = 0;
-				}
-				else if (IsKeyDown(KEY_A))
-				{
-					x = x - vX;
-					Direction = 1;
-				}
-
-				// Colisión con el suelo
-				if (y >= Floor)
-				{
-					y = Floor;
-				}
-			}
-
-			// Límites de la pantalla
-			if (x > screenWidth - 15) x = screenWidth - 15;
-			if (x < -5) x = -5;
-			if (y > screenHeight - 100) y = screenHeight - 100;
-		}
-
-		//------------------Colisión entre personaje y bola--------------------
-		if (playerActive) {
-			// Rectángulo del personaje (mismo tamaño que el sprite)
-			Rectangle playerRect = { x, y, Spring_Width, Spring_Height };
-			// Rectángulo de la bola (mismo tamaño que el personaje)
-			Rectangle ballRect = { ballX, ballY, Spring_Width, Spring_Height };
-
-			// Verificar colisión
-			if (CheckCollisionRecs(playerRect, ballRect)) {
-				playerActive = false;  // Desactivar personaje: desaparece por completo
-			}
-		}
-
-		//------------------Dibujado--------------------
-		BeginDrawing();
-		ClearBackground(BLACK);
-
-		DrawText("You should KILL YOURSELF NOW!", 30, 100, 20, PURPLE);
-
-		// Dibujar la bola (círculo rojo con el mismo centro que su rectángulo de colisión)
-		Vector2 ballCenter = { ballX + Spring_Width / 2.0f, ballY + Spring_Height / 2.0f };
-		float ballRadius = Spring_Width / 2.0f;
-		AnimationSettings();
-		Rectangle source = (Rectangle){ Enemy.Frame * 16.5, 0, Spring_Width, Spring_Height };
-		Rectangle dest = (Rectangle){ ballX, ballY, Spring_Width, Spring_Height };
-		DrawTexturePro(CreatureL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-
-		// Opcional: dibujar el rectángulo de colisión (descomentar para debug)
-		// DrawRectangleLines(ballX, ballY, Spring_Width, Spring_Height, GREEN);
-
-		// Dibujar el personaje solo si está activo
-		if (playerActive) {
-			// Dibujar animación cuando está en movimiento en el suelo
-			if (canMove && !isJumping && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A)))
-			{
-				if (IsKeyDown(KEY_D))
-				{
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-				}
-				else if (IsKeyDown(KEY_A))
-				{
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(AnimL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-				}
-			}
-			// Dibujar sprite estático cuando está quieto en el suelo
-			else if (canMove && !isJumping)
-			{
-				if (Direction == 0)
-				{
-					DrawTexture(Rabbit, x, y, WHITE);
-				}
-				else
-				{
-					DrawTexture(Rabbit_O, x, y, WHITE);
-				}
-			}
-			// Dibujar sprite durante el salto
-			else if (isJumping)
-			{
-				
-				if (Direction == 0)
-				{
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(JumpR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-				}
-				else
-				{
-					Rectangle source = (Rectangle){ Spring.Frame * Spring_Width, 0, Spring_Width, Spring_Height };
-					Rectangle dest = (Rectangle){ x, y, Spring_Width, Spring_Height };
-					DrawTexturePro(JumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-				}
-			}
-		}
-		else {
-			// Si el personaje está desactivado, mostrar mensaje de Game Over
-			DrawText("GAME OVER", screenWidth / 2 - 60, screenHeight / 2, 30, RED);
-		}
-
-		// Dibujar el suelo
-		DrawRectangle(0, 233, screenWidth, 10, WHITE);
-
-		EndDrawing();
-	}
-	//---------------------------------------------------
-
-	//-----------------Cleanup-----------------
-	UnloadTexture(Rabbit);
-	UnloadTexture(Rabbit_O);
-	UnloadTexture(AnimL);
-	UnloadTexture(AnimR);
-	CloseWindow();
-	return 0;
-}
