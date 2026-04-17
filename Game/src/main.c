@@ -99,8 +99,8 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     Enemy.Frame = 0;
     Enemy.Counter = 0;
 
-    // Cámara sigue al jugador (centrado)
-    camera->target = (Vector2){ *playerX, *playerY };
+    // Cámara sigue al jugador (X variable, Y fija en 220)
+    camera->target = (Vector2){ *playerX, 220 };
     camera->offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     camera->rotation = 0.0f;
     camera->zoom = 2.0f;
@@ -129,13 +129,13 @@ int main() {
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
-    float vX = 3.0f;                // Velocidad horizontal (aumentada)
-    float G = 0.2f;                 // Gravedad (ligeramente mayor para mejor sensación)
+    float vX = 3.0f;                // Velocidad horizontal (constante)
+    float G = 0.2f;                 // Gravedad
     bool canMove = true;
     bool isJumping = false;
     int jumpDirection = 0;          // 0 = arriba, -1 = izquierda, 1 = derecha
     float verticalSpeed = 0.0f;
-    float initialJumpSpeed = -7.0f; // Un poco más alto
+    float initialJumpSpeed = -7.0f;
     float horizontalSpeed = 0.0f;
     int direction = 0;              // 0 = derecha, 1 = izquierda
     bool playerActive = true;
@@ -145,13 +145,13 @@ int main() {
 
     // ------------------ Variables del enemigo -----------------
     float enemyX, enemyY;
-    float enemySpeed = 2.0f;        // Un poco más rápido
+    float enemySpeed = 2.0f;
 
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
 
     // Velocidades de animación
-    Spring.Speed = 6;   // Un poco más rápido
+    Spring.Speed = 6;
     Enemy.Speed = 7;
 
     // Inicializar estado del juego
@@ -214,28 +214,22 @@ int main() {
 
         case PLAYING: {
             if (playerActive) {
-                // ----- Movimiento horizontal (suelo y aire) -----
-                float moveInput = 0.0f;
-                if (IsKeyDown(KEY_D)) {
-                    moveInput += 1.0f;
-                    direction = 0;
-                }
-                if (IsKeyDown(KEY_A)) {
-                    moveInput -= 1.0f;
-                    direction = 1;
-                }
-
-                // Velocidad horizontal deseada
-                float targetSpeedX = moveInput * vX;
-
-                // En el suelo, aplicamos directamente; en el aire, también pero con posible fricción (opcional)
+                // ----- Movimiento horizontal (suelo) -----
                 if (canMove && !isJumping) {
-                    // Movimiento en suelo: actualizar X y aplicar colisiones
-                    float newX = playerX + targetSpeedX;
-                    // Colisión horizontal con tiles
+                    float newX = playerX;
+                    if (IsKeyDown(KEY_D)) {
+                        newX += vX;
+                        direction = 0;
+                    }
+                    else if (IsKeyDown(KEY_A)) {
+                        newX -= vX;
+                        direction = 1;
+                    }
+
+                    // Colisión horizontal
                     int topTile = (int)(playerY) / TILE_SIZE;
                     int bottomTile = (int)(playerY + SPRING_HEIGHT - 1) / TILE_SIZE;
-                    if (targetSpeedX > 0) { // Derecha
+                    if (newX > playerX) { // Derecha
                         int rightTile = (int)(newX + SPRING_WIDTH) / TILE_SIZE;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][rightTile] == 1) {
@@ -244,7 +238,7 @@ int main() {
                             }
                         }
                     }
-                    else if (targetSpeedX < 0) { // Izquierda
+                    else if (newX < playerX) { // Izquierda
                         int leftTile = (int)(newX) / TILE_SIZE;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][leftTile] == 1) {
@@ -268,10 +262,40 @@ int main() {
                         isGrounded = false;
                     }
                 }
-                else if (isJumping) {
-                    // En el aire: aplicar velocidad horizontal constante (igual que en suelo)
+
+                // ----- Salto -----
+                if (canMove && !isJumping) {
+                    if (IsKeyPressed(KEY_SPACE)) {
+                        isJumping = true;
+                        canMove = false;
+                        verticalSpeed = initialJumpSpeed;
+
+                        // Dirección del salto según input
+                        if (IsKeyDown(KEY_D)) {
+                            jumpDirection = 1;
+                            direction = 0;
+                            horizontalSpeed = vX;
+                        }
+                        else if (IsKeyDown(KEY_A)) {
+                            jumpDirection = -1;
+                            direction = 1;
+                            horizontalSpeed = -vX;
+                        }
+                        else {
+                            jumpDirection = 0;
+                            horizontalSpeed = 0.0f;
+                        }
+                    }
+                }
+
+                // ----- Física del salto -----
+                if (isJumping) {
+                    verticalSpeed += G;
+                    playerY += verticalSpeed;
+
+                    // Movimiento horizontal constante durante el salto
                     float newX = playerX + horizontalSpeed;
-                    // Colisión horizontal durante el salto
+                    // Colisión horizontal en el aire
                     int topTile = (int)(playerY) / TILE_SIZE;
                     int bottomTile = (int)(playerY + SPRING_HEIGHT - 1) / TILE_SIZE;
                     if (horizontalSpeed > 0) {
@@ -295,42 +319,8 @@ int main() {
                         }
                     }
                     playerX = newX;
-                }
 
-                // ----- Salto -----
-                if (canMove && !isJumping) {
-                    if (IsKeyPressed(KEY_SPACE)) {
-                        isJumping = true;
-                        canMove = false;
-                        verticalSpeed = initialJumpSpeed;
-
-                        // Dirección del salto según input
-                        if (IsKeyDown(KEY_D)) {
-                            jumpDirection = 1;
-                            direction = 0;
-                            horizontalSpeed = vX;   // misma velocidad que caminar
-                        }
-                        else if (IsKeyDown(KEY_A)) {
-                            jumpDirection = -1;
-                            direction = 1;
-                            horizontalSpeed = -vX;
-                        }
-                        else {
-                            jumpDirection = 0;
-                            horizontalSpeed = 0.0f;
-                        }
-                    }
-                }
-
-                // ----- Física del salto -----
-                if (isJumping) {
-                    verticalSpeed += G;
-                    playerY += verticalSpeed;
-
-                    // Movimiento horizontal durante el salto
-                    playerX += horizontalSpeed;
-
-                    // Colisión con el suelo
+                    // Colisión con el suelo durante el salto
                     int tileX = (int)(playerX + SPRING_WIDTH / 2) / TILE_SIZE;
                     int tileY = (int)(playerY + SPRING_HEIGHT) / TILE_SIZE;
                     if (map[tileY][tileX] == 1) {
@@ -342,16 +332,14 @@ int main() {
                         horizontalSpeed = 0;
                         isGrounded = true;
                     }
-                    else {
-                        // Colisión con el techo
-                        int headTileY = (int)(playerY) / TILE_SIZE;
-                        if (map[headTileY][tileX] == 1) {
-                            playerY = (headTileY + 1) * TILE_SIZE;
-                            verticalSpeed = 0;
-                        }
+
+                    // Colisión con el techo
+                    int headTileY = (int)(playerY) / TILE_SIZE;
+                    if (map[headTileY][tileX] == 1) {
+                        playerY = (headTileY + 1) * TILE_SIZE;
+                        verticalSpeed = 0;
                     }
 
-                    // No salir del mapa por arriba
                     if (playerY < 0) {
                         playerY = 0;
                         verticalSpeed = 0;
@@ -388,8 +376,8 @@ int main() {
                 }
             }
 
-            // Actualizar cámara (seguir al jugador)
-            camera.target = (Vector2){ playerX + SPRING_WIDTH / 2, playerY + SPRING_HEIGHT / 2 };
+            // Actualizar cámara (sigue en X, Y fija en 220)
+            camera.target = (Vector2){ playerX, 220 };
 
             // Actualizar animaciones
             AnimationSettings();
@@ -397,7 +385,6 @@ int main() {
         }
 
         case GAMEOVER: {
-            // (sin cambios)
             if (IsKeyPressed(KEY_UP)) {
                 gameOverSelection--;
                 if (gameOverSelection < 0) gameOverSelection = 1;
@@ -515,7 +502,6 @@ int main() {
             }
 
             EndMode2D();
-
             break;
         }
 
