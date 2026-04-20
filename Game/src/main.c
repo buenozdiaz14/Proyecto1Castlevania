@@ -182,9 +182,9 @@ int main() {
     Camera2D camera = { 0 };
 
     // Velocidades de animación
-    Spring.Speed = 5;
+    Spring.Speed = 7;
     Enemy.Speed = 7;
-    Attacker.Speed = 5;
+    Attacker.Speed = 7;
 
     // Inicializar estado del juego
     ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
