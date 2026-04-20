@@ -35,28 +35,16 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\All Sprites.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\Anim_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
     <Image Include="resources\Anim_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\OtherSide.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\castelvania.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\wabbit_alpha.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\All Sprites.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
     <Image Include="resources\Attack.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\Zombie_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
     <Image Include="resources\Idle.png">
@@ -71,10 +59,25 @@
     <Image Include="resources\Jump_R.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\OtherSide.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\Walking_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
     <Image Include="resources\Walking_R.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Zombie_L.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\castelvania.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\maapa.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>

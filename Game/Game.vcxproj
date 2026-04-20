@@ -322,11 +322,12 @@
     <Image Include="resources\Jump_L.png" />
     <Image Include="resources\Jump_R.png" />
     <Image Include="resources\OtherSide.png" />
-    <Image Include="resources\castelvania.png" />
-    <Image Include="resources\wabbit_alpha.png" />
     <Image Include="resources\Walking_L.png" />
     <Image Include="resources\Walking_R.png" />
     <Image Include="resources\Zombie_L.png" />
+    <Image Include="resources\castelvania.png" />
+    <Image Include="resources\maapa.png" />
+    <Image Include="resources\wabbit_alpha.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="raylib.vcxproj">
