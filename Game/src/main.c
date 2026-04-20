@@ -7,9 +7,11 @@
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 450
 
-// Tamaño real de los sprites (16x31)
-#define SPRING_WIDTH  16
-#define SPRING_HEIGHT 31
+// Tamaños independientes para jugador y enemigo
+#define PLAYER_WIDTH  72
+#define PLAYER_HEIGHT 32
+#define ENEMY_WIDTH   16
+#define ENEMY_HEIGHT  31
 
 // Tamaño de los tiles
 #define TILE_SIZE     34
@@ -39,15 +41,23 @@ typedef enum GameState {
     GAMEOVER
 } GameState;
 
-// Estructura para animaciones
+// Estructura para animaciones (personaje y enemigo)
 struct Animation {
     int Frame;
     int Counter;
     int Speed;
 } Spring, Enemy;
 
-// Actualiza frames de animación (3 frames)
+// Estructura para animaciones de ataque (6 frames)
+struct AttackAnimation {
+    int Frame;
+    int Counter;
+    int Speed;
+} Attacker;
+
+// Actualiza frames de animación
 void AnimationSettings() {
+    // Animación del personaje (caminar, saltar) - 3 frames
     Spring.Counter++;
     if (Spring.Counter >= (100 / Spring.Speed)) {
         Spring.Counter = 0;
@@ -55,23 +65,32 @@ void AnimationSettings() {
         if (Spring.Frame > 2) Spring.Frame = 0;
     }
 
+    // Animación del enemigo - 3 frames (usa su propio ancho de sprite)
     Enemy.Counter++;
     if (Enemy.Counter >= (100 / Enemy.Speed)) {
         Enemy.Counter = 0;
         Enemy.Frame++;
         if (Enemy.Frame > 2) Enemy.Frame = 0;
     }
+
+    // Animación de ataque - 6 frames (0 a 5)
+    Attacker.Counter++;
+    if (Attacker.Counter >= (100 / Attacker.Speed)) {
+        Attacker.Counter = 0;
+        Attacker.Frame++;
+        if (Attacker.Frame > 5) Attacker.Frame = 0;
+    }
 }
 
-// Función auxiliar para obtener la altura del suelo en una posición X dada
+// Función auxiliar para obtener la altura del suelo en una posición X dada (para el jugador)
 float GetGroundHeight(float x) {
-    int tileX = (int)(x + SPRING_WIDTH / 2) / TILE_SIZE;
+    int tileX = (int)(x + PLAYER_WIDTH / 2) / TILE_SIZE;
     for (int y = 0; y < MAP_HEIGHT; y++) {
         if (map[y][tileX] == 1) {
-            return y * TILE_SIZE - SPRING_HEIGHT;
+            return y * TILE_SIZE - PLAYER_HEIGHT;
         }
     }
-    return MAP_HEIGHT * TILE_SIZE - SPRING_HEIGHT; // Fondo del mapa
+    return MAP_HEIGHT * TILE_SIZE - PLAYER_HEIGHT;
 }
 
 // Reinicia todas las variables del juego
@@ -79,9 +98,9 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     bool* canMove, bool* isJumping, int* jumpDirection,
     float* verticalSpeed, float* horizontalSpeed,
     float* enemyX, float* enemyY, bool* playerActive,
-    int* direction, Camera2D* camera, int screenWidth, int screenHeight) {
+    int* direction, bool* isDucking, bool* isAttacking,
+    Camera2D* camera, int screenWidth, int screenHeight) {
     *playerX = 200.0f;
-    // Colocar al jugador sobre el suelo en esa posición
     *playerY = GetGroundHeight(*playerX);
     *velocityY = 0.0f;
     *isGrounded = true;
@@ -90,16 +109,20 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     *jumpDirection = 0;
     *verticalSpeed = 0.0f;
     *horizontalSpeed = 0.0f;
-    *enemyX = (float)(screenWidth + 200);
-    *enemyY = 0.0f;  // Se ajustará en el primer frame
+    // Enemigo aparece en el borde derecho del MAPA (no de la pantalla)
+    *enemyX = (float)(MAP_WIDTH * TILE_SIZE);
+    *enemyY = 0.0f;
     *playerActive = true;
     *direction = 0;
+    *isDucking = false;
+    *isAttacking = false;
     Spring.Frame = 0;
     Spring.Counter = 0;
     Enemy.Frame = 0;
     Enemy.Counter = 0;
+    Attacker.Frame = 0;
+    Attacker.Counter = 0;
 
-    // Cámara sigue al jugador (X variable, Y fija en 220)
     camera->target = (Vector2){ *playerX, 220 };
     camera->offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     camera->rotation = 0.0f;
@@ -116,8 +139,14 @@ int main() {
     Texture2D idleL = LoadTexture("Idle_Sided.png");
     Texture2D walkR = LoadTexture("Walking_R.png");
     Texture2D walkL = LoadTexture("Walking_L.png");
-    Texture2D jumpR = LoadTexture("Jump_R.png");
+    Texture2D jumpR = LoadTexture("Jumper.png");
     Texture2D jumpL = LoadTexture("Jump_L.png");
+    Texture2D duckR = LoadTexture("Crouch_R.png");
+    Texture2D duckL = LoadTexture("Crouch_L.png");
+    Texture2D attackR = LoadTexture("Attack_R.png");
+    Texture2D attackL = LoadTexture("Attack_L - Rework.png");
+    Texture2D attackR_C = LoadTexture("C_A_R.png");
+    Texture2D attackL_C = LoadTexture("C_A_L.png");
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
     SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
@@ -129,18 +158,20 @@ int main() {
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
-    float vX = 3.0f;                // Velocidad horizontal (constante)
-    float G = 0.2f;                 // Gravedad
+    float vX = 3.0f;
+    float G = 0.2f;
     bool canMove = true;
     bool isJumping = false;
-    int jumpDirection = 0;          // 0 = arriba, -1 = izquierda, 1 = derecha
+    int jumpDirection = 0;
     float verticalSpeed = 0.0f;
     float initialJumpSpeed = -7.0f;
     float horizontalSpeed = 0.0f;
     int direction = 0;              // 0 = derecha, 1 = izquierda
     bool playerActive = true;
+    bool isDucking = false;
+    bool isAttacking = false;
 
-    float velocityY = 0.0f;         // Para compatibilidad con ResetGame
+    float velocityY = 0.0f;
     bool isGrounded = false;
 
     // ------------------ Variables del enemigo -----------------
@@ -151,14 +182,16 @@ int main() {
     Camera2D camera = { 0 };
 
     // Velocidades de animación
-    Spring.Speed = 6;
+    Spring.Speed = 5;
     Enemy.Speed = 7;
+    Attacker.Speed = 5;
 
     // Inicializar estado del juego
     ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
         &canMove, &isJumping, &jumpDirection,
         &verticalSpeed, &horizontalSpeed,
         &enemyX, &enemyY, &playerActive, &direction,
+        &isDucking, &isAttacking,
         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     SetTargetFPS(60);
@@ -183,6 +216,7 @@ int main() {
                         &canMove, &isJumping, &jumpDirection,
                         &verticalSpeed, &horizontalSpeed,
                         &enemyX, &enemyY, &playerActive, &direction,
+                        &isDucking, &isAttacking,
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
                 else if (menuSelection == 1) {
@@ -200,6 +234,7 @@ int main() {
                         &canMove, &isJumping, &jumpDirection,
                         &verticalSpeed, &horizontalSpeed,
                         &enemyX, &enemyY, &playerActive, &direction,
+                        &isDucking, &isAttacking,
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
             }
@@ -213,9 +248,32 @@ int main() {
         }
 
         case PLAYING: {
+            // Actualizar animaciones (se hace siempre)
+            AnimationSettings();
+
+            // Determinar estados de agacharse y atacar (solo en suelo, no saltando)
+            bool duckKey = IsKeyDown(KEY_LEFT_SHIFT);
+            bool attackKey = IsKeyDown(KEY_E);
+            isDucking = false;
+            isAttacking = false;
+
+            if (!isJumping) {
+                if (attackKey) {
+                    isAttacking = true;
+                    canMove = false;
+                }
+                else if (duckKey) {
+                    isDucking = true;
+                    canMove = false;
+                }
+                else {
+                    canMove = true;
+                }
+            }
+
             if (playerActive) {
-                // ----- Movimiento horizontal (suelo) -----
-                if (canMove && !isJumping) {
+                // Movimiento horizontal (suelo)
+                if (canMove && !isJumping && !isAttacking && !isDucking) {
                     float newX = playerX;
                     if (IsKeyDown(KEY_D)) {
                         newX += vX;
@@ -228,17 +286,17 @@ int main() {
 
                     // Colisión horizontal
                     int topTile = (int)(playerY) / TILE_SIZE;
-                    int bottomTile = (int)(playerY + SPRING_HEIGHT - 1) / TILE_SIZE;
-                    if (newX > playerX) { // Derecha
-                        int rightTile = (int)(newX + SPRING_WIDTH) / TILE_SIZE;
+                    int bottomTile = (int)(playerY + PLAYER_HEIGHT - 1) / TILE_SIZE;
+                    if (newX > playerX) {
+                        int rightTile = (int)(newX + PLAYER_WIDTH) / TILE_SIZE;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][rightTile] == 1) {
-                                newX = rightTile * TILE_SIZE - SPRING_WIDTH;
+                                newX = rightTile * TILE_SIZE - PLAYER_WIDTH;
                                 break;
                             }
                         }
                     }
-                    else if (newX < playerX) { // Izquierda
+                    else if (newX < playerX) {
                         int leftTile = (int)(newX) / TILE_SIZE;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][leftTile] == 1) {
@@ -249,13 +307,12 @@ int main() {
                     }
                     playerX = newX;
 
-                    // Aplicar gravedad
+                    // Gravedad
                     playerY += G;
-                    // Colisión vertical (suelo)
-                    int tileX = (int)(playerX + SPRING_WIDTH / 2) / TILE_SIZE;
-                    int tileY = (int)(playerY + SPRING_HEIGHT) / TILE_SIZE;
+                    int tileX = (int)(playerX + PLAYER_WIDTH / 2) / TILE_SIZE;
+                    int tileY = (int)(playerY + PLAYER_HEIGHT) / TILE_SIZE;
                     if (map[tileY][tileX] == 1) {
-                        playerY = tileY * TILE_SIZE - SPRING_HEIGHT;
+                        playerY = tileY * TILE_SIZE - PLAYER_HEIGHT;
                         isGrounded = true;
                     }
                     else {
@@ -263,14 +320,13 @@ int main() {
                     }
                 }
 
-                // ----- Salto -----
-                if (canMove && !isJumping) {
+                // Salto
+                if (canMove && !isJumping && !isAttacking && !isDucking) {
                     if (IsKeyPressed(KEY_SPACE)) {
                         isJumping = true;
                         canMove = false;
                         verticalSpeed = initialJumpSpeed;
 
-                        // Dirección del salto según input
                         if (IsKeyDown(KEY_D)) {
                             jumpDirection = 1;
                             direction = 0;
@@ -288,22 +344,20 @@ int main() {
                     }
                 }
 
-                // ----- Física del salto -----
+                // Física del salto
                 if (isJumping) {
                     verticalSpeed += G;
                     playerY += verticalSpeed;
 
-                    // Movimiento horizontal constante durante el salto
                     float newX = playerX + horizontalSpeed;
-                    // Colisión horizontal en el aire
                     int topTile = (int)(playerY) / TILE_SIZE;
-                    int bottomTile = (int)(playerY + SPRING_HEIGHT - 1) / TILE_SIZE;
+                    int bottomTile = (int)(playerY + PLAYER_HEIGHT - 1) / TILE_SIZE;
                     if (horizontalSpeed > 0) {
-                        int rightTile = (int)(newX + SPRING_WIDTH) / TILE_SIZE;
+                        int rightTile = (int)(newX + PLAYER_WIDTH) / TILE_SIZE;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][rightTile] == 1) {
-                                newX = rightTile * TILE_SIZE - SPRING_WIDTH;
-                                horizontalSpeed = 0; // chocamos con pared
+                                newX = rightTile * TILE_SIZE - PLAYER_WIDTH;
+                                horizontalSpeed = 0;
                                 break;
                             }
                         }
@@ -320,11 +374,10 @@ int main() {
                     }
                     playerX = newX;
 
-                    // Colisión con el suelo durante el salto
-                    int tileX = (int)(playerX + SPRING_WIDTH / 2) / TILE_SIZE;
-                    int tileY = (int)(playerY + SPRING_HEIGHT) / TILE_SIZE;
+                    int tileX = (int)(playerX + PLAYER_WIDTH / 2) / TILE_SIZE;
+                    int tileY = (int)(playerY + PLAYER_HEIGHT) / TILE_SIZE;
                     if (map[tileY][tileX] == 1) {
-                        playerY = tileY * TILE_SIZE - SPRING_HEIGHT;
+                        playerY = tileY * TILE_SIZE - PLAYER_HEIGHT;
                         isJumping = false;
                         canMove = true;
                         verticalSpeed = 0;
@@ -333,7 +386,6 @@ int main() {
                         isGrounded = true;
                     }
 
-                    // Colisión con el techo
                     int headTileY = (int)(playerY) / TILE_SIZE;
                     if (map[headTileY][tileX] == 1) {
                         playerY = (headTileY + 1) * TILE_SIZE;
@@ -346,29 +398,32 @@ int main() {
                     }
                 }
 
-                // Límite izquierdo
                 if (playerX < 0) playerX = 0;
             }
 
-            // ---------- Movimiento del enemigo ----------
+            // ---------- Movimiento del enemigo (recorre todo el mapa) ----------
             enemyX -= enemySpeed;
-            if (enemyX + SPRING_WIDTH < 0) {
-                enemyX = SCREEN_WIDTH + 200;
+            // Si sale completamente por la izquierda, reaparece en el extremo derecho del mapa
+            if (enemyX + ENEMY_WIDTH < 0) {
+                enemyX = (float)(MAP_WIDTH * TILE_SIZE);
             }
 
-            // Ajustar altura del enemigo al suelo
-            int enemyTileX = (int)(enemyX + SPRING_WIDTH / 2) / TILE_SIZE;
+            // Ajustar altura del enemigo al suelo (usando su tamaño real)
+            int enemyTileX = (int)(enemyX + ENEMY_WIDTH / 2) / TILE_SIZE;
+            // Asegurarse de que el tileX esté dentro de los límites del mapa
+            if (enemyTileX < 0) enemyTileX = 0;
+            if (enemyTileX >= MAP_WIDTH) enemyTileX = MAP_WIDTH - 1;
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 if (map[y][enemyTileX] == 1) {
-                    enemyY = y * TILE_SIZE - SPRING_HEIGHT;
+                    enemyY = y * TILE_SIZE - ENEMY_HEIGHT;
                     break;
                 }
             }
 
-            // ---------- Colisión jugador - enemigo ----------
+            // Colisión jugador - enemigo (rectángulo del enemigo con tamaño real)
             if (playerActive) {
-                Rectangle playerRect = { playerX, playerY, SPRING_WIDTH, SPRING_HEIGHT };
-                Rectangle enemyRect = { enemyX, enemyY, SPRING_WIDTH, SPRING_HEIGHT };
+                Rectangle playerRect = { playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT };
+                Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
                 if (CheckCollisionRecs(playerRect, enemyRect)) {
                     playerActive = false;
                     gameState = GAMEOVER;
@@ -376,11 +431,7 @@ int main() {
                 }
             }
 
-            // Actualizar cámara (sigue en X, Y fija en 220)
             camera.target = (Vector2){ playerX, 220 };
-
-            // Actualizar animaciones
-            AnimationSettings();
             break;
         }
 
@@ -400,6 +451,7 @@ int main() {
                         &canMove, &isJumping, &jumpDirection,
                         &verticalSpeed, &horizontalSpeed,
                         &enemyX, &enemyY, &playerActive, &direction,
+                        &isDucking, &isAttacking,
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
                 else if (gameOverSelection == 1) {
@@ -417,6 +469,7 @@ int main() {
                         &canMove, &isJumping, &jumpDirection,
                         &verticalSpeed, &horizontalSpeed,
                         &enemyX, &enemyY, &playerActive, &direction,
+                        &isDucking, &isAttacking,
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
             }
@@ -471,33 +524,52 @@ int main() {
                 }
             }
 
-            // Enemigo
-            Rectangle enemySource = { Enemy.Frame * SPRING_WIDTH, 0, SPRING_WIDTH, SPRING_HEIGHT };
-            Rectangle enemyDest = { enemyX, enemyY, SPRING_WIDTH, SPRING_HEIGHT };
+            // Enemigo (usa su propio ancho de sprite)
+            Rectangle enemySource = { Enemy.Frame * ENEMY_WIDTH, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
+            Rectangle enemyDest = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
             DrawTexturePro(enemyTex, enemySource, enemyDest, (Vector2) { 0, 0 }, 0, WHITE);
 
             // Jugador
             if (playerActive) {
-                Rectangle source = { Spring.Frame * SPRING_WIDTH, 0, SPRING_WIDTH, SPRING_HEIGHT };
-                Rectangle dest = { playerX, playerY, SPRING_WIDTH, SPRING_HEIGHT };
+                Rectangle source;
+                Rectangle dest = { playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT };
+                Texture2D textureToDraw;
+                bool usePro = true;
 
-                if (isJumping) {
-                    if (direction == 0)
-                        DrawTexturePro(jumpR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    else
-                        DrawTexturePro(jumpL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+                // Detectar si se está atacando agachado
+                bool attackDucking = isAttacking && IsKeyDown(KEY_LEFT_SHIFT);
+
+                if (isAttacking) {
+                    source = (Rectangle){ Attacker.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    if (attackDucking) {
+                        textureToDraw = (direction == 0) ? attackR_C : attackL_C;
+                    }
+                    else {
+                        textureToDraw = (direction == 0) ? attackR : attackL;
+                    }
+                }
+                else if (isDucking) {
+                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    textureToDraw = (direction == 0) ? duckR : duckL;
+                }
+                else if (isJumping) {
+                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    textureToDraw = (direction == 0) ? jumpR : jumpL;
                 }
                 else if (canMove && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A))) {
-                    if (direction == 0)
-                        DrawTexturePro(walkR, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
-                    else
-                        DrawTexturePro(walkL, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
+                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    textureToDraw = (direction == 0) ? walkR : walkL;
                 }
                 else {
+                    usePro = false;
                     if (direction == 0)
                         DrawTextureEx(idleR, (Vector2) { playerX, playerY }, 0, 1, WHITE);
                     else
                         DrawTextureEx(idleL, (Vector2) { playerX, playerY }, 0, 1, WHITE);
+                }
+
+                if (usePro) {
+                    DrawTexturePro(textureToDraw, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
                 }
             }
 
@@ -537,6 +609,12 @@ int main() {
     UnloadTexture(walkL);
     UnloadTexture(jumpR);
     UnloadTexture(jumpL);
+    UnloadTexture(duckR);
+    UnloadTexture(duckL);
+    UnloadTexture(attackR);
+    UnloadTexture(attackL);
+    UnloadTexture(attackR_C);
+    UnloadTexture(attackL_C);
     UnloadTexture(enemyTex);
     UnloadTexture(fondo);
     CloseWindow();
