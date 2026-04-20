@@ -182,9 +182,9 @@ int main() {
     Camera2D camera = { 0 };
 
     // Velocidades de animación
-    Spring.Speed = 7;
+    Spring.Speed = 5;
     Enemy.Speed = 7;
-    Attacker.Speed = 7;
+    Attacker.Speed = 15;
 
     // Inicializar estado del juego
     ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
@@ -276,10 +276,12 @@ int main() {
                 if (canMove && !isJumping && !isAttacking && !isDucking) {
                     float newX = playerX;
                     if (IsKeyDown(KEY_D)) {
+                        AnimationSettings();
                         newX += vX;
                         direction = 0;
                     }
                     else if (IsKeyDown(KEY_A)) {
+                        AnimationSettings();
                         newX -= vX;
                         direction = 1;
                     }
