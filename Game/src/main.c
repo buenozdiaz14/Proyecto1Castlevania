@@ -7,18 +7,24 @@
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 450
 
-// Tamaños independientes para jugador y enemigo
-#define PLAYER_WIDTH  72
-#define PLAYER_HEIGHT 32
+// Tamaños del sprite del jugador (ancho completo, incluye transparencia)
+#define PLAYER_SPRITE_WIDTH  72
+#define PLAYER_SPRITE_HEIGHT 32
+
+// Hitbox real del jugador (más pequeña, solo la parte sólida)
+#define PLAYER_HITBOX_WIDTH  24
+#define PLAYER_HITBOX_HEIGHT 32
+
+// Tamaños del enemigo
 #define ENEMY_WIDTH   16
 #define ENEMY_HEIGHT  31
 
 // Tamaño de los tiles
 #define TILE_SIZE     34
 #define MAP_WIDTH     250
-#define MAP_HEIGHT    103
+#define MAP_HEIGHT    12   // Ajustado a las filas reales definidas en map[][]
 
-// Mapa
+// Mapa (12 filas de alto, 250 columnas de ancho)
 int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -38,7 +44,8 @@ int map[MAP_HEIGHT][MAP_WIDTH] = {
 typedef enum GameState {
     MENU,
     PLAYING,
-    GAMEOVER
+    GAMEOVER,
+    WIN
 } GameState;
 
 // Estructura para animaciones (personaje y enemigo)
@@ -65,7 +72,7 @@ void AnimationSettings() {
         if (Spring.Frame > 2) Spring.Frame = 0;
     }
 
-    // Animación del enemigo - 3 frames (usa su propio ancho de sprite)
+    // Animación del enemigo - 3 frames
     Enemy.Counter++;
     if (Enemy.Counter >= (100 / Enemy.Speed)) {
         Enemy.Counter = 0;
@@ -82,15 +89,26 @@ void AnimationSettings() {
     }
 }
 
-// Función auxiliar para obtener la altura del suelo en una posición X dada (para el jugador)
+// Obtener altura del suelo para una posición X (usando la hitbox real del jugador)
 float GetGroundHeight(float x) {
-    int tileX = (int)(x + PLAYER_WIDTH / 2) / TILE_SIZE;
+    int tileX = (int)(x + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
     for (int y = 0; y < MAP_HEIGHT; y++) {
         if (map[y][tileX] == 1) {
-            return y * TILE_SIZE - PLAYER_HEIGHT;
+            return y * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
         }
     }
-    return MAP_HEIGHT * TILE_SIZE - PLAYER_HEIGHT;
+    return MAP_HEIGHT * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
+}
+
+// Obtener altura del suelo para el enemigo
+float GetEnemyGroundHeight(float x) {
+    int tileX = (int)(x + ENEMY_WIDTH / 2) / TILE_SIZE;
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        if (map[y][tileX] == 1) {
+            return y * TILE_SIZE - ENEMY_HEIGHT;
+        }
+    }
+    return MAP_HEIGHT * TILE_SIZE - ENEMY_HEIGHT;
 }
 
 // Reinicia todas las variables del juego
@@ -109,9 +127,14 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     *jumpDirection = 0;
     *verticalSpeed = 0.0f;
     *horizontalSpeed = 0.0f;
-    // Enemigo aparece en el borde derecho del MAPA (no de la pantalla)
-    *enemyX = (float)(MAP_WIDTH * TILE_SIZE);
-    *enemyY = 0.0f;
+
+    // Enemigo aparece 800 píxeles por delante del jugador
+    *enemyX = *playerX + 800.0f;
+    // Asegurar que no se salga del mapa
+    if (*enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
+        *enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
+    }
+    *enemyY = GetEnemyGroundHeight(*enemyX);
     *playerActive = true;
     *direction = 0;
     *isDucking = false;
@@ -123,7 +146,8 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     Attacker.Frame = 0;
     Attacker.Counter = 0;
 
-    camera->target = (Vector2){ *playerX, 220 };
+    // Cámara centrada en el jugador (Y fija en 290)
+    camera->target = (Vector2){ *playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
     camera->offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
     camera->rotation = 0.0f;
     camera->zoom = 2.0f;
@@ -155,6 +179,7 @@ int main() {
     GameState gameState = MENU;
     int menuSelection = 0;
     int gameOverSelection = 0;
+    int winSelection = 0;       // 0 = Return to Menu, 1 = Exit
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
@@ -184,7 +209,7 @@ int main() {
     // Velocidades de animación
     Spring.Speed = 5;
     Enemy.Speed = 7;
-    Attacker.Speed = 15;
+    Attacker.Speed = 5;
 
     // Inicializar estado del juego
     ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
@@ -198,6 +223,11 @@ int main() {
 
     // Bucle principal
     while (!WindowShouldClose()) {
+        // Actualizar animaciones (se hace siempre durante el juego)
+        if (gameState == PLAYING) {
+            AnimationSettings();
+        }
+
         // ---------- Actualización según estado ----------
         switch (gameState) {
         case MENU: {
@@ -248,9 +278,6 @@ int main() {
         }
 
         case PLAYING: {
-            // Actualizar animaciones (se hace siempre)
-            AnimationSettings();
-
             // Determinar estados de agacharse y atacar (solo en suelo, no saltando)
             bool duckKey = IsKeyDown(KEY_LEFT_SHIFT);
             bool attackKey = IsKeyDown(KEY_E);
@@ -276,30 +303,30 @@ int main() {
                 if (canMove && !isJumping && !isAttacking && !isDucking) {
                     float newX = playerX;
                     if (IsKeyDown(KEY_D)) {
-                        AnimationSettings();
                         newX += vX;
                         direction = 0;
                     }
                     else if (IsKeyDown(KEY_A)) {
-                        AnimationSettings();
                         newX -= vX;
                         direction = 1;
                     }
 
-                    // Colisión horizontal
+                    // Colisión horizontal con la hitbox reducida
                     int topTile = (int)(playerY) / TILE_SIZE;
-                    int bottomTile = (int)(playerY + PLAYER_HEIGHT - 1) / TILE_SIZE;
+                    int bottomTile = (int)(playerY + PLAYER_HITBOX_HEIGHT - 1) / TILE_SIZE;
                     if (newX > playerX) {
-                        int rightTile = (int)(newX + PLAYER_WIDTH) / TILE_SIZE;
+                        int rightTile = (int)(newX + PLAYER_HITBOX_WIDTH) / TILE_SIZE;
+                        if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][rightTile] == 1) {
-                                newX = rightTile * TILE_SIZE - PLAYER_WIDTH;
+                                newX = rightTile * TILE_SIZE - PLAYER_HITBOX_WIDTH;
                                 break;
                             }
                         }
                     }
                     else if (newX < playerX) {
                         int leftTile = (int)(newX) / TILE_SIZE;
+                        if (leftTile < 0) leftTile = 0;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][leftTile] == 1) {
                                 newX = (leftTile + 1) * TILE_SIZE;
@@ -311,10 +338,11 @@ int main() {
 
                     // Gravedad
                     playerY += G;
-                    int tileX = (int)(playerX + PLAYER_WIDTH / 2) / TILE_SIZE;
-                    int tileY = (int)(playerY + PLAYER_HEIGHT) / TILE_SIZE;
+                    int tileX = (int)(playerX + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
+                    int tileY = (int)(playerY + PLAYER_HITBOX_HEIGHT) / TILE_SIZE;
+                    if (tileY >= MAP_HEIGHT) tileY = MAP_HEIGHT - 1;
                     if (map[tileY][tileX] == 1) {
-                        playerY = tileY * TILE_SIZE - PLAYER_HEIGHT;
+                        playerY = tileY * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
                         isGrounded = true;
                     }
                     else {
@@ -353,12 +381,13 @@ int main() {
 
                     float newX = playerX + horizontalSpeed;
                     int topTile = (int)(playerY) / TILE_SIZE;
-                    int bottomTile = (int)(playerY + PLAYER_HEIGHT - 1) / TILE_SIZE;
+                    int bottomTile = (int)(playerY + PLAYER_HITBOX_HEIGHT - 1) / TILE_SIZE;
                     if (horizontalSpeed > 0) {
-                        int rightTile = (int)(newX + PLAYER_WIDTH) / TILE_SIZE;
+                        int rightTile = (int)(newX + PLAYER_HITBOX_WIDTH) / TILE_SIZE;
+                        if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][rightTile] == 1) {
-                                newX = rightTile * TILE_SIZE - PLAYER_WIDTH;
+                                newX = rightTile * TILE_SIZE - PLAYER_HITBOX_WIDTH;
                                 horizontalSpeed = 0;
                                 break;
                             }
@@ -366,6 +395,7 @@ int main() {
                     }
                     else if (horizontalSpeed < 0) {
                         int leftTile = (int)(newX) / TILE_SIZE;
+                        if (leftTile < 0) leftTile = 0;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
                             if (map[ty][leftTile] == 1) {
                                 newX = (leftTile + 1) * TILE_SIZE;
@@ -376,10 +406,11 @@ int main() {
                     }
                     playerX = newX;
 
-                    int tileX = (int)(playerX + PLAYER_WIDTH / 2) / TILE_SIZE;
-                    int tileY = (int)(playerY + PLAYER_HEIGHT) / TILE_SIZE;
+                    int tileX = (int)(playerX + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
+                    int tileY = (int)(playerY + PLAYER_HITBOX_HEIGHT) / TILE_SIZE;
+                    if (tileY >= MAP_HEIGHT) tileY = MAP_HEIGHT - 1;
                     if (map[tileY][tileX] == 1) {
-                        playerY = tileY * TILE_SIZE - PLAYER_HEIGHT;
+                        playerY = tileY * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
                         isJumping = false;
                         canMove = true;
                         verticalSpeed = 0;
@@ -389,6 +420,7 @@ int main() {
                     }
 
                     int headTileY = (int)(playerY) / TILE_SIZE;
+                    if (headTileY >= MAP_HEIGHT) headTileY = MAP_HEIGHT - 1;
                     if (map[headTileY][tileX] == 1) {
                         playerY = (headTileY + 1) * TILE_SIZE;
                         verticalSpeed = 0;
@@ -401,39 +433,46 @@ int main() {
                 }
 
                 if (playerX < 0) playerX = 0;
-            }
 
-            // ---------- Movimiento del enemigo (recorre todo el mapa) ----------
-            enemyX -= enemySpeed;
-            // Si sale completamente por la izquierda, reaparece en el extremo derecho del mapa
-            if (enemyX + ENEMY_WIDTH < 0) {
-                enemyX = (float)(MAP_WIDTH * TILE_SIZE);
-            }
-
-            // Ajustar altura del enemigo al suelo (usando su tamaño real)
-            int enemyTileX = (int)(enemyX + ENEMY_WIDTH / 2) / TILE_SIZE;
-            // Asegurarse de que el tileX esté dentro de los límites del mapa
-            if (enemyTileX < 0) enemyTileX = 0;
-            if (enemyTileX >= MAP_WIDTH) enemyTileX = MAP_WIDTH - 1;
-            for (int y = 0; y < MAP_HEIGHT; y++) {
-                if (map[y][enemyTileX] == 1) {
-                    enemyY = y * TILE_SIZE - ENEMY_HEIGHT;
-                    break;
+                // ----- DETECCIÓN DE VICTORIA (CON TOLERANCIA) -----
+                // Se activa cuando la hitbox del jugador toca (o casi toca) la pared derecha.
+                // La pared derecha está en la columna MAP_WIDTH-1.
+                float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f; // 1 píxel de margen
+                if (playerX + PLAYER_HITBOX_WIDTH >= victoryThreshold) {
+                    gameState = WIN;
+                    winSelection = 0;
                 }
             }
 
-            // Colisión jugador - enemigo (rectángulo del enemigo con tamaño real)
+            // ----- COMPORTAMIENTO DEL ENEMIGO -----
+            // Movimiento hacia la izquierda
+            enemyX -= enemySpeed;
+
+            // Si el enemigo está 800 px a la izquierda del jugador, lo recolocamos 800 px a la derecha
+            if (playerX - enemyX >= 800.0f) {
+                enemyX = playerX + 800.0f;
+                // Asegurar que no se salga del mapa por la derecha
+                if (enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
+                    enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
+                }
+            }
+
+            // Ajustar altura del enemigo al suelo
+            enemyY = GetEnemyGroundHeight(enemyX);
+
+            // Colisión jugador - enemigo (usando hitbox reducida del jugador)
             if (playerActive) {
-                Rectangle playerRect = { playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT };
+                Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
-                if (CheckCollisionRecs(playerRect, enemyRect)) {
+                if (CheckCollisionRecs(playerHitbox, enemyRect)) {
                     playerActive = false;
                     gameState = GAMEOVER;
                     gameOverSelection = 0;
                 }
             }
 
-            camera.target = (Vector2){ playerX, 220 };
+            // Actualizar cámara (centrada en el jugador)
+            camera.target = (Vector2){ playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
             break;
         }
 
@@ -483,6 +522,43 @@ int main() {
             }
             break;
         }
+
+        case WIN: {
+            if (IsKeyPressed(KEY_UP)) {
+                winSelection--;
+                if (winSelection < 0) winSelection = 1;
+            }
+            if (IsKeyPressed(KEY_DOWN)) {
+                winSelection++;
+                if (winSelection > 1) winSelection = 0;
+            }
+            if (IsKeyPressed(KEY_ENTER)) {
+                if (winSelection == 0) {
+                    gameState = MENU;
+                    menuSelection = 0;
+                }
+                else if (winSelection == 1) {
+                    break;
+                }
+            }
+            Vector2 mousePos = GetMousePosition();
+            Rectangle menuBtn = { SCREEN_WIDTH / 2.0f - 80, SCREEN_HEIGHT / 2.0f + 10, 160, 30 };
+            Rectangle exitBtn = { SCREEN_WIDTH / 2.0f - 50, SCREEN_HEIGHT / 2.0f + 50, 100, 30 };
+            if (CheckCollisionPointRec(mousePos, menuBtn)) {
+                winSelection = 0;
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    gameState = MENU;
+                    menuSelection = 0;
+                }
+            }
+            else if (CheckCollisionPointRec(mousePos, exitBtn)) {
+                winSelection = 1;
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    break;
+                }
+            }
+            break;
+        }
         }
 
         // ---------- Dibujado ----------
@@ -514,10 +590,8 @@ int main() {
         case PLAYING: {
             BeginMode2D(camera);
 
-            // Fondo
             DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
 
-            // Tiles del mapa
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 for (int x = 0; x < MAP_WIDTH; x++) {
                     if (map[y][x] == 1) {
@@ -526,23 +600,27 @@ int main() {
                 }
             }
 
-            // Enemigo (usa su propio ancho de sprite)
+            // Dibujar enemigo
             Rectangle enemySource = { Enemy.Frame * ENEMY_WIDTH, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
             Rectangle enemyDest = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
             DrawTexturePro(enemyTex, enemySource, enemyDest, (Vector2) { 0, 0 }, 0, WHITE);
 
-            // Jugador
             if (playerActive) {
                 Rectangle source;
-                Rectangle dest = { playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT };
+                float spriteOffsetX = (PLAYER_SPRITE_WIDTH - PLAYER_HITBOX_WIDTH) / 2.0f;
+                Rectangle dest = {
+                    playerX - spriteOffsetX,
+                    playerY,
+                    PLAYER_SPRITE_WIDTH,
+                    PLAYER_SPRITE_HEIGHT
+                };
                 Texture2D textureToDraw;
                 bool usePro = true;
 
-                // Detectar si se está atacando agachado
                 bool attackDucking = isAttacking && IsKeyDown(KEY_LEFT_SHIFT);
 
                 if (isAttacking) {
-                    source = (Rectangle){ Attacker.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    source = (Rectangle){ Attacker.Frame * PLAYER_SPRITE_WIDTH, 0, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT };
                     if (attackDucking) {
                         textureToDraw = (direction == 0) ? attackR_C : attackL_C;
                     }
@@ -551,29 +629,33 @@ int main() {
                     }
                 }
                 else if (isDucking) {
-                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    source = (Rectangle){ Spring.Frame * PLAYER_SPRITE_WIDTH, 0, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT };
                     textureToDraw = (direction == 0) ? duckR : duckL;
                 }
                 else if (isJumping) {
-                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    source = (Rectangle){ Spring.Frame * PLAYER_SPRITE_WIDTH, 0, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT };
                     textureToDraw = (direction == 0) ? jumpR : jumpL;
                 }
                 else if (canMove && (IsKeyDown(KEY_D) || IsKeyDown(KEY_A))) {
-                    source = (Rectangle){ Spring.Frame * PLAYER_WIDTH, 0, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    source = (Rectangle){ Spring.Frame * PLAYER_SPRITE_WIDTH, 0, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT };
                     textureToDraw = (direction == 0) ? walkR : walkL;
                 }
                 else {
                     usePro = false;
                     if (direction == 0)
-                        DrawTextureEx(idleR, (Vector2) { playerX, playerY }, 0, 1, WHITE);
+                        DrawTextureEx(idleR, (Vector2) { dest.x, dest.y }, 0, 1, WHITE);
                     else
-                        DrawTextureEx(idleL, (Vector2) { playerX, playerY }, 0, 1, WHITE);
+                        DrawTextureEx(idleL, (Vector2) { dest.x, dest.y }, 0, 1, WHITE);
                 }
 
                 if (usePro) {
                     DrawTexturePro(textureToDraw, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
                 }
             }
+
+            // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
+            DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
+            DrawRectangle((MAP_WIDTH - 1) * TILE_SIZE, 0, TILE_SIZE, MAP_HEIGHT * TILE_SIZE, (Color) { 255, 0, 0, 100 });
 
             EndMode2D();
             break;
@@ -592,6 +674,27 @@ int main() {
             Color tryAgainColor = (gameOverSelection == 0) ? YELLOW : WHITE;
             Color exitColor = (gameOverSelection == 1) ? YELLOW : WHITE;
             DrawText(tryAgainText, (SCREEN_WIDTH - tryAgainWidth) / 2, SCREEN_HEIGHT / 2 + 10, optFontSize, tryAgainColor);
+            DrawText(exitText, (SCREEN_WIDTH - exitWidth) / 2, SCREEN_HEIGHT / 2 + 50, optFontSize, exitColor);
+            const char* instr = "Use ARROWS and ENTER or click";
+            int instrFontSize = 15;
+            int instrWidth = MeasureText(instr, instrFontSize);
+            DrawText(instr, (SCREEN_WIDTH - instrWidth) / 2, SCREEN_HEIGHT - 40, instrFontSize, GRAY);
+            break;
+        }
+
+        case WIN: {
+            const char* winText = "LEVEL WIN";
+            int winFontSize = 40;
+            int winWidth = MeasureText(winText, winFontSize);
+            DrawText(winText, (SCREEN_WIDTH - winWidth) / 2, SCREEN_HEIGHT / 2 - 60, winFontSize, GREEN);
+            const char* menuText = "Return to Menu";
+            const char* exitText = "Exit";
+            int optFontSize = 25;
+            int menuWidth = MeasureText(menuText, optFontSize);
+            int exitWidth = MeasureText(exitText, optFontSize);
+            Color menuColor = (winSelection == 0) ? YELLOW : WHITE;
+            Color exitColor = (winSelection == 1) ? YELLOW : WHITE;
+            DrawText(menuText, (SCREEN_WIDTH - menuWidth) / 2, SCREEN_HEIGHT / 2 + 10, optFontSize, menuColor);
             DrawText(exitText, (SCREEN_WIDTH - exitWidth) / 2, SCREEN_HEIGHT / 2 + 50, optFontSize, exitColor);
             const char* instr = "Use ARROWS and ENTER or click";
             int instrFontSize = 15;
