@@ -15,6 +15,9 @@
 #define PLAYER_HITBOX_WIDTH  24
 #define PLAYER_HITBOX_HEIGHT 32
 
+#define ATTACK_HITBOX_WIDTH  40
+#define ATTACK_HITBOX_HEIGHT 18
+
 // Tamaños del enemigo
 #define ENEMY_WIDTH   16
 #define ENEMY_HEIGHT  31
@@ -79,14 +82,19 @@ void AnimationSettings() {
         Enemy.Frame++;
         if (Enemy.Frame > 2) Enemy.Frame = 0;
     }
-
-    // Animación de ataque - 6 frames (0 a 5)
-    Attacker.Counter++;
-    if (Attacker.Counter >= (100 / Attacker.Speed)) {
-        Attacker.Counter = 0;
-        Attacker.Frame++;
-        if (Attacker.Frame > 5) Attacker.Frame = 0;
+    
+    if (IsKeyDown(KEY_E))
+    {
+        // Animación de ataque - 6 frames (0 a 5)
+        Attacker.Counter++;
+        if (Attacker.Counter >= (100 / Attacker.Speed)) {
+            Attacker.Counter = 0;
+            Attacker.Frame++;
+            if (Attacker.Frame > 5) Attacker.Frame = 0;
+        }
     }
+    else
+        Attacker.Frame = 0;
 }
 
 // Obtener altura del suelo para una posición X (usando la hitbox real del jugador)
@@ -207,9 +215,9 @@ int main() {
     Camera2D camera = { 0 };
 
     // Velocidades de animación
-    Spring.Speed = 5;
+    Spring.Speed = 6;
     Enemy.Speed = 7;
-    Attacker.Speed = 5;
+    Attacker.Speed = 10;
 
     // Inicializar estado del juego
     ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
@@ -286,6 +294,7 @@ int main() {
 
             if (!isJumping) {
                 if (attackKey) {
+                    AnimationSettings();
                     isAttacking = true;
                     canMove = false;
                 }
@@ -461,10 +470,20 @@ int main() {
             enemyY = GetEnemyGroundHeight(enemyX);
 
             // Colisión jugador - enemigo (usando hitbox reducida del jugador)
-            if (playerActive) {
+            if (playerActive) 
+            {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
-                if (CheckCollisionRecs(playerHitbox, enemyRect)) {
+                Rectangle attackHitbox = { playerX, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
+                if (attackKey)
+                {
+                    if (CheckCollisionRecs(attackHitbox, enemyRect))
+                    {
+                        enemyX = playerX + 800;
+                    }
+                }
+                if (CheckCollisionRecs(playerHitbox, enemyRect)) 
+                {
                     playerActive = false;
                     gameState = GAMEOVER;
                     gameOverSelection = 0;
