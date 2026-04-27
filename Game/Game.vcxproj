@@ -325,6 +325,7 @@
     <Image Include="resources\C_A_R.png" />
     <Image Include="resources\Idle.png" />
     <Image Include="resources\Idle_Sided.png" />
+    <Image Include="resources\Item_Placeholder.png" />
     <Image Include="resources\Jump_L.png" />
     <Image Include="resources\Jump_R.png" />
     <Image Include="resources\OtherSide.png" />

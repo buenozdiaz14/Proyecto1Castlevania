@@ -183,6 +183,7 @@ int main() {
     Texture2D attackL_C = LoadTexture("C_A_L.png");
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
+    Texture2D Weapon2 = LoadTexture("Item_Placeholder.png");
     SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
 
     // ------------------ Variables de estado -----------------
@@ -680,6 +681,10 @@ int main() {
                     DrawTexturePro(textureToDraw, source, dest, (Vector2) { 0, 0 }, 0, WHITE);
                 }
             }
+
+            //Dibujar Arma 02
+            DrawTextureEx(Weapon2, (Vector2) { 400, 342}, 0, 1, WHITE);
+           
 
             // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
             DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
