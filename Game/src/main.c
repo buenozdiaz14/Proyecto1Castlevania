@@ -27,6 +27,7 @@
 #define MAP_WIDTH     250
 #define MAP_HEIGHT    12   // Ajustado a las filas reales definidas en map[][]
 
+
 // Mapa (12 filas de alto, 250 columnas de ancho)
 int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -48,7 +49,8 @@ typedef enum GameState {
     MENU,
     PLAYING,
     GAMEOVER,
-    WIN
+    WIN,
+    EXIT
 } GameState;
 
 // Estructura para animaciones (personaje y enemigo)
@@ -229,8 +231,10 @@ int main() {
 
     SetTargetFPS(60);
 
+    bool CloseIt = false;
+
     // Bucle principal
-    while (!WindowShouldClose()) {
+    while (CloseIt == 0 && !WindowShouldClose()) {
         // Actualizar animaciones (se hace siempre durante el juego)
         if (gameState == PLAYING) {
             AnimationSettings();
@@ -258,7 +262,7 @@ int main() {
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
                 else if (menuSelection == 1) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             Vector2 mousePos = GetMousePosition();
@@ -279,10 +283,15 @@ int main() {
             else if (CheckCollisionPointRec(mousePos, exitBtn)) {
                 menuSelection = 1;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             break;
+        }
+      
+        case EXIT:
+        {
+            CloseIt = true;
         }
 
         case PLAYING: {
@@ -515,7 +524,7 @@ int main() {
                         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
                 else if (gameOverSelection == 1) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             Vector2 mousePos = GetMousePosition();
@@ -536,7 +545,7 @@ int main() {
             else if (CheckCollisionPointRec(mousePos, exitBtn)) {
                 gameOverSelection = 1;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             break;
@@ -620,7 +629,7 @@ int main() {
             }
 
             // Dibujar enemigo
-            Rectangle enemySource = { Enemy.Frame * ENEMY_WIDTH, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
+            Rectangle enemySource = { Enemy.Frame * 17, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
             Rectangle enemyDest = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
             DrawTexturePro(enemyTex, enemySource, enemyDest, (Vector2) { 0, 0 }, 0, WHITE);
 
