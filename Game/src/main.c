@@ -685,6 +685,7 @@ int main() {
             //Dibujar Arma 02
             DrawTextureEx(Weapon2, (Vector2) { 400, 342}, 0, 1, WHITE);
            
+            
 
             // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
             DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
