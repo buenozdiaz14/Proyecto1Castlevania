@@ -23,8 +23,8 @@
 #define ENEMY_HEIGHT  31
 
 // Item 
-#define ITEM_WIDTH   72
-#define ITEM_HEIGHT  32
+#define ITEM_WIDTH   16
+#define ITEM_HEIGHT  16
 
 // Tamaño de los tiles
 #define TILE_SIZE     34
@@ -187,7 +187,7 @@ int main() {
     Texture2D attackL_C = LoadTexture("C_A_L.png");
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
-    Texture2D Weapon2 = LoadTexture("Item_Placeholder.png");
+    Texture2D Weapon2 = LoadTexture("Item_Star.png");
     Texture2D Item1 = LoadTexture("Item_Image1.png");
     Texture2D Item2 = LoadTexture("Item_Image2.png");
 
@@ -496,7 +496,7 @@ int main() {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
                 Rectangle attackHitbox = { playerX, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
-                if (attackKey)
+                if (attackKey && Whip)
                 {
                     if (CheckCollisionRecs(attackHitbox, enemyRect))
                     {
@@ -659,7 +659,7 @@ int main() {
 
                 bool attackDucking = isAttacking && IsKeyDown(KEY_LEFT_SHIFT);
 
-                if (isAttacking) {
+                if (isAttacking && Whip) {
                     source = (Rectangle){ Attacker.Frame * PLAYER_SPRITE_WIDTH, 0, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT };
                     if (attackDucking) {
                         textureToDraw = (direction == 0) ? attackR_C : attackL_C;
@@ -704,11 +704,11 @@ int main() {
                 Whip = false;
                 Star = true;
             }
-            while (Whip)
+            if (Whip)
             {
                 DrawTextureEx(Item1, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
-            while (Star)
+            if (Star)
             {
                 DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
@@ -716,12 +716,12 @@ int main() {
 
             //Dibujar Arma 02
 
-            while (CollectStar == false)
+            if (CollectStar == false)
             {
-                Rectangle playerHitbo = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
+                Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle StarHitbox = { 400, 342, ITEM_WIDTH, ITEM_HEIGHT };
-                DrawTextureEx(Weapon2, (Vector2) { 400, 342 }, 0, 1, WHITE);
-                if (CheckCollisionRecs(playerHitbo, StarHitbox))
+                DrawTextureEx(Weapon2, (Vector2) { 400, 358 }, 0, 1, WHITE);
+                if (CheckCollisionRecs(playerHitbox, StarHitbox))
                 {
                     CollectStar = true;
                 }
@@ -799,6 +799,8 @@ int main() {
     UnloadTexture(attackR_C);
     UnloadTexture(attackL_C);
     UnloadTexture(enemyTex);
+    UnloadTexture(Item1);
+    UnloadTexture(Item2);
     UnloadTexture(fondo);
     CloseWindow();
     return 0;
