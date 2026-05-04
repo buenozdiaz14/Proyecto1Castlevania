@@ -22,6 +22,10 @@
 #define ENEMY_WIDTH   16
 #define ENEMY_HEIGHT  31
 
+// Item 
+#define ITEM_WIDTH   72
+#define ITEM_HEIGHT  32
+
 // Tamaño de los tiles
 #define TILE_SIZE     34
 #define MAP_WIDTH     250
@@ -184,6 +188,9 @@ int main() {
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
     Texture2D Weapon2 = LoadTexture("Item_Placeholder.png");
+    Texture2D Item1 = LoadTexture("Item_Image1.png");
+    Texture2D Item2 = LoadTexture("Item_Image2.png");
+
     SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
 
     // ------------------ Variables de estado -----------------
@@ -214,6 +221,10 @@ int main() {
     float enemyX, enemyY;
     float enemySpeed = 2.0f;
 
+    // ------------------ [ITEMS] -----------------
+    bool Whip = true;
+    bool Star = false;
+    bool CollectStar = false;
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
 
@@ -682,8 +693,41 @@ int main() {
                 }
             }
 
+            //Item Frame
+            if (IsKeyPressed(KEY_ONE))
+            {
+                Whip = true;
+                Star = false;
+            }
+            if (CollectStar && IsKeyPressed(KEY_TWO))
+            {
+                Whip = false;
+                Star = true;
+            }
+            while (Whip)
+            {
+                DrawTextureEx(Item1, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
+            }
+            while (Star)
+            {
+                DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
+            }
+            
+
             //Dibujar Arma 02
-            DrawTextureEx(Weapon2, (Vector2) { 400, 342}, 0, 1, WHITE);
+
+            while (CollectStar == false)
+            {
+                Rectangle playerHitbo = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
+                Rectangle StarHitbox = { 400, 342, ITEM_WIDTH, ITEM_HEIGHT };
+                DrawTextureEx(Weapon2, (Vector2) { 400, 342 }, 0, 1, WHITE);
+                if (CheckCollisionRecs(playerHitbo, StarHitbox))
+                {
+                    CollectStar = true;
+                }
+            }
+
+            
            
             
 

@@ -101,5 +101,11 @@
     <Image Include="resources\Item_Placeholder.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\Item_Image1.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Item_Image2.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
