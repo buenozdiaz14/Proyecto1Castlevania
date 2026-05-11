@@ -108,4 +108,9 @@
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\001.wav">
+      <Filter>Game Resource Files</Filter>
+    </Media>
+  </ItemGroup>
 </Project>
