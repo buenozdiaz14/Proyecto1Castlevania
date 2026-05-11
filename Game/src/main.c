@@ -201,12 +201,16 @@ int main() {
     int gameOverSelection = 0;
     int winSelection = 0;       // 0 = Return to Menu, 1 = Exit
 
-    Music musicaFondo = LoadMusicStream("resources/001.wav");
+    Music musicaFondo = LoadMusicStream("001.wav");
+    Music Stage01 = LoadMusicStream("002.mp3");
     SetMasterVolume(1.0f);
     SetMusicVolume(musicaFondo, 1.0f);
     SetMusicPan(musicaFondo, 1.0f);
     PlayMusicStream(musicaFondo);
 
+    SetMusicVolume(Stage01, 0);
+    SetMusicPan(Stage01, 0);
+    PlayMusicStream(Stage01);
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
@@ -258,10 +262,13 @@ int main() {
     while (CloseIt == 0 && !WindowShouldClose()) 
     {
         UpdateMusicStream(musicaFondo);
+        UpdateMusicStream(Stage01);
 
         // Actualizar animaciones (se hace siempre durante el juego)
         if (gameState == PLAYING) {
             AnimationSettings();
+            SetMusicVolume(musicaFondo, 0);
+            SetMusicVolume(Stage01, 1.0f);
         }
 
         // ---------- Actualización según estado ----------
@@ -511,7 +518,7 @@ int main() {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
                 Rectangle attackHitboxR = { playerX + 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
-                Rectangle attackHitboxL = { playerX - 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
+                Rectangle attackHitboxL = { playerX - 10, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
                
                 if (attackKey && Whip)
                 {
@@ -768,6 +775,7 @@ int main() {
         }
 
         case GAMEOVER: {
+            UnloadMusicStream(Stage01);
             const char* gameOverText = "GAME OVER";
             int goFontSize = 40;
             int goWidth = MeasureText(gameOverText, goFontSize);
@@ -815,6 +823,7 @@ int main() {
 
     // Liberar recursos
     UnloadMusicStream(musicaFondo);
+    UnloadMusicStream(Stage01);
     CloseAudioDevice();
 
     UnloadTexture(idleR);
