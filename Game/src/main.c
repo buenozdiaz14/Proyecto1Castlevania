@@ -32,6 +32,7 @@
 #define MAP_HEIGHT    12   // Ajustado a las filas reales definidas en map[][]
 
 
+
 // Mapa (12 filas de alto, 250 columnas de ancho)
 int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -171,6 +172,7 @@ int main() {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "_C4STL3V4N14_");
     SearchAndSetResourceDir("resources");
+    InitAudioDevice();
 
     // ------------------ Carga de texturas -----------------
     Texture2D idleR = LoadTexture("Idle.png");
@@ -198,6 +200,13 @@ int main() {
     int menuSelection = 0;
     int gameOverSelection = 0;
     int winSelection = 0;       // 0 = Return to Menu, 1 = Exit
+
+    Music musicaFondo = LoadMusicStream("resources/001.wav");
+    SetMasterVolume(1.0f);
+    SetMusicVolume(musicaFondo, 1.0f);
+    SetMusicPan(musicaFondo, 1.0f);
+    PlayMusicStream(musicaFondo);
+
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
@@ -246,7 +255,10 @@ int main() {
     bool CloseIt = false;
 
     // Bucle principal
-    while (CloseIt == 0 && !WindowShouldClose()) {
+    while (CloseIt == 0 && !WindowShouldClose()) 
+    {
+        UpdateMusicStream(musicaFondo);
+
         // Actualizar animaciones (se hace siempre durante el juego)
         if (gameState == PLAYING) {
             AnimationSettings();
@@ -802,6 +814,9 @@ int main() {
     }
 
     // Liberar recursos
+    UnloadMusicStream(musicaFondo);
+    CloseAudioDevice();
+
     UnloadTexture(idleR);
     UnloadTexture(idleL);
     UnloadTexture(walkR);
