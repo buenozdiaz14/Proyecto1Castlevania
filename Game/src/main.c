@@ -15,7 +15,7 @@
 #define PLAYER_HITBOX_WIDTH  24
 #define PLAYER_HITBOX_HEIGHT 32
 
-#define ATTACK_HITBOX_WIDTH  40
+#define ATTACK_HITBOX_WIDTH  20
 #define ATTACK_HITBOX_HEIGHT 18
 
 // Tamaños del enemigo
@@ -314,16 +314,19 @@ int main() {
             isAttacking = false;
 
             if (!isJumping) {
-                if (attackKey) {
+                if (attackKey) 
+                {
                     AnimationSettings();
                     isAttacking = true;
                     canMove = false;
                 }
-                else if (duckKey) {
+                else if (duckKey) 
+                {
                     isDucking = true;
                     canMove = false;
                 }
-                else {
+                else 
+                {
                     canMove = true;
                 }
             }
@@ -495,13 +498,26 @@ int main() {
             {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
-                Rectangle attackHitbox = { playerX, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
+                Rectangle attackHitboxR = { playerX + 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
+                Rectangle attackHitboxL = { playerX - 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
+               
                 if (attackKey && Whip)
                 {
-                    if (CheckCollisionRecs(attackHitbox, enemyRect))
+                    if (direction == 0)
                     {
-                        enemyX = playerX + 800;
+                        if (CheckCollisionRecs(attackHitboxR, enemyRect))
+                        {
+                            enemyX = playerX + 800;
+                        }
                     }
+                    else if (direction == 1)
+                    {
+                        if (CheckCollisionRecs(attackHitboxL, enemyRect))
+                        {
+                            enemyX = playerX + 800;
+                        }
+                    }
+                   
                 }
                 if (CheckCollisionRecs(playerHitbox, enemyRect)) 
                 {
