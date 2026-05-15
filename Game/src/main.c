@@ -34,7 +34,7 @@
 
 
 // Mapa (12 filas de alto, 250 columnas de ancho)
-int map[MAP_HEIGHT][MAP_WIDTH] = {
+int Level1[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -48,7 +48,8 @@ int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
-
+int (*currentLevel)[MAP_WIDTH] = Level1;
+int Map2[MAP_HEIGHT][MAP_WIDTH];
 // Estados del juego
 typedef enum GameState {
     MENU,
@@ -108,7 +109,7 @@ void AnimationSettings() {
 float GetGroundHeight(float x) {
     int tileX = (int)(x + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
     for (int y = 0; y < MAP_HEIGHT; y++) {
-        if (map[y][tileX] == 1) {
+        if (currentLevel[y][tileX] == 1) {
             return y * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
         }
     }
@@ -119,7 +120,7 @@ float GetGroundHeight(float x) {
 float GetEnemyGroundHeight(float x) {
     int tileX = (int)(x + ENEMY_WIDTH / 2) / TILE_SIZE;
     for (int y = 0; y < MAP_HEIGHT; y++) {
-        if (map[y][tileX] == 1) {
+        if (currentLevel[y][tileX] == 1) {
             return y * TILE_SIZE - ENEMY_HEIGHT;
         }
     }
@@ -168,6 +169,11 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     camera->zoom = 2.0f;
 }
 
+
+int currentMap = 1;
+
+
+
 int main() {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "_C4STL3V4N14_");
@@ -189,6 +195,7 @@ int main() {
     Texture2D attackL_C = LoadTexture("C_A_L.png");
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
+    Texture2D fondo2 = LoadTexture("Map2.png");
     Texture2D Weapon2 = LoadTexture("Item_Star.png");
     Texture2D Item1 = LoadTexture("Item_Image1.png");
     Texture2D Item2 = LoadTexture("Item_Image2.png");
@@ -238,6 +245,7 @@ int main() {
     bool CollectStar = false;
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
+   
     
     // Velocidades de animación
     Spring.Speed = 6;
@@ -251,6 +259,31 @@ int main() {
         &enemyX, &enemyY, &playerActive, &direction,
         &isDucking, &isAttacking,
         &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+   
+    for (int y = 0; y < MAP_HEIGHT; y++)
+    {
+        for (int x = 0; x < MAP_WIDTH; x++)
+        {
+            Map2[y][x] = Level1[y][x];
+        }
+    }
+
+
+
+    for (int i = 20; i < 35; i++)
+    {
+        Map2[8][i] = 1;
+    }
+
+    for (int i = 50; i < 70; i++)
+    {
+        Map2[6][i] = 1;
+    }
+
+    for (int i = 90; i < 120; i++)
+    {
+        Map2[4][i] = 1;
+    }
 
     SetTargetFPS(60);
 
@@ -374,7 +407,7 @@ int main() {
                         int rightTile = (int)(newX + PLAYER_HITBOX_WIDTH) / TILE_SIZE;
                         if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
-                            if (map[ty][rightTile] == 1) {
+                            if (currentLevel[ty][rightTile] == 1) {
                                 newX = rightTile * TILE_SIZE - PLAYER_HITBOX_WIDTH;
                                 break;
                             }
@@ -384,7 +417,7 @@ int main() {
                         int leftTile = (int)(newX) / TILE_SIZE;
                         if (leftTile < 0) leftTile = 0;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
-                            if (map[ty][leftTile] == 1) {
+                            if (currentLevel[ty][leftTile] == 1) {
                                 newX = (leftTile + 1) * TILE_SIZE;
                                 break;
                             }
@@ -397,7 +430,7 @@ int main() {
                     int tileX = (int)(playerX + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
                     int tileY = (int)(playerY + PLAYER_HITBOX_HEIGHT) / TILE_SIZE;
                     if (tileY >= MAP_HEIGHT) tileY = MAP_HEIGHT - 1;
-                    if (map[tileY][tileX] == 1) {
+                    if (currentLevel[tileY][tileX] == 1) {
                         playerY = tileY * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
                         isGrounded = true;
                     }
@@ -442,7 +475,7 @@ int main() {
                         int rightTile = (int)(newX + PLAYER_HITBOX_WIDTH) / TILE_SIZE;
                         if (rightTile >= MAP_WIDTH) rightTile = MAP_WIDTH - 1;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
-                            if (map[ty][rightTile] == 1) {
+                            if (currentLevel[ty][rightTile] == 1) {
                                 newX = rightTile * TILE_SIZE - PLAYER_HITBOX_WIDTH;
                                 horizontalSpeed = 0;
                                 break;
@@ -453,7 +486,7 @@ int main() {
                         int leftTile = (int)(newX) / TILE_SIZE;
                         if (leftTile < 0) leftTile = 0;
                         for (int ty = topTile; ty <= bottomTile; ty++) {
-                            if (map[ty][leftTile] == 1) {
+                            if (currentLevel[ty][leftTile] == 1) {
                                 newX = (leftTile + 1) * TILE_SIZE;
                                 horizontalSpeed = 0;
                                 break;
@@ -465,7 +498,7 @@ int main() {
                     int tileX = (int)(playerX + PLAYER_HITBOX_WIDTH / 2) / TILE_SIZE;
                     int tileY = (int)(playerY + PLAYER_HITBOX_HEIGHT) / TILE_SIZE;
                     if (tileY >= MAP_HEIGHT) tileY = MAP_HEIGHT - 1;
-                    if (map[tileY][tileX] == 1) {
+                    if (currentLevel[tileY][tileX] == 1) {
                         playerY = tileY * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
                         isJumping = false;
                         canMove = true;
@@ -477,7 +510,7 @@ int main() {
 
                     int headTileY = (int)(playerY) / TILE_SIZE;
                     if (headTileY >= MAP_HEIGHT) headTileY = MAP_HEIGHT - 1;
-                    if (map[headTileY][tileX] == 1) {
+                    if (currentLevel[headTileY][tileX] == 1) {
                         playerY = (headTileY + 1) * TILE_SIZE;
                         verticalSpeed = 0;
                     }
@@ -493,12 +526,28 @@ int main() {
                 // ----- DETECCIÓN DE VICTORIA (CON TOLERANCIA) -----
                 // Se activa cuando la hitbox del jugador toca (o casi toca) la pared derecha.
                 // La pared derecha está en la columna MAP_WIDTH-1.
-                float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f; // 1 píxel de margen
-                if (playerX + PLAYER_HITBOX_WIDTH >= victoryThreshold) {
-                    gameState = WIN;
-                    winSelection = 0;
+                if (playerX >= 4300)
+                {
+                    printf("MAP CHANGED\n");
+
+                    if (currentMap == 1)
+                    {
+                        currentMap = 2;
+                        currentLevel = Map2;
+
+                        playerX = 100;
+                        playerY = GetGroundHeight(playerX);
+
+                        enemyX = playerX + 500;
+                        enemyY = GetEnemyGroundHeight(enemyX);
+
+                        camera.target = (Vector2){ playerX, 290.0f };
+                    }
+                    else
+                    {
+                        gameState = WIN;
+                    }
                 }
-            }
 
             // ----- COMPORTAMIENTO DEL ENEMIGO -----
             // Movimiento hacia la izquierda
@@ -669,11 +718,18 @@ int main() {
         case PLAYING: {
             BeginMode2D(camera);
 
-            DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
+            if (currentMap == 1)
+            {
+                DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
+            }
+            else
+            {
+                DrawTextureEx(fondo2, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
+            }
 
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 for (int x = 0; x < MAP_WIDTH; x++) {
-                    if (map[y][x] == 1) {
+                    if (currentLevel[y][x] == 1) {
                         DrawRectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, DARKGRAY);
                     }
                 }
