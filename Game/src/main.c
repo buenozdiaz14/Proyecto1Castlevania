@@ -31,8 +31,6 @@
 #define MAP_WIDTH     250
 #define MAP_HEIGHT    12   // Ajustado a las filas reales definidas en map[][]
 
-
-
 // Mapa (12 filas de alto, 250 columnas de ancho)
 int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -72,6 +70,27 @@ struct AttackAnimation {
     int Speed;
 } Attacker;
 
+// ---------- Nuevas variables globales para los items ----------
+bool Whip = true;
+bool Star = false;
+bool CollectStar = false;
+
+// ---------- Estructura para el proyectil ----------
+typedef struct Projectile {
+    bool active;
+    float x, y;
+    float direction;   // 1 = derecha, -1 = izquierda
+    float distance;
+} Projectile;
+
+Projectile starBall = { false, 0, 0, 1, 0 };
+#define PROJECTILE_SPEED 5.0f
+#define PROJECTILE_RANGE 400.0f
+
+// ---------- Cooldown del proyectil ----------
+float starCooldown = 0.0f;
+#define STAR_COOLDOWN_TIME 1.0f
+
 // Actualiza frames de animación
 void AnimationSettings() {
     // Animación del personaje (caminar, saltar) - 3 frames
@@ -89,10 +108,10 @@ void AnimationSettings() {
         Enemy.Frame++;
         if (Enemy.Frame > 2) Enemy.Frame = 0;
     }
-    
-    if (IsKeyDown(KEY_E))
+
+    // Solo animamos el ataque si está equipado el látigo
+    if (Whip && IsKeyDown(KEY_E))
     {
-        // Animación de ataque - 6 frames (0 a 5)
         Attacker.Counter++;
         if (Attacker.Counter >= (100 / Attacker.Speed)) {
             Attacker.Counter = 0;
@@ -145,7 +164,6 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
 
     // Enemigo aparece 800 píxeles por delante del jugador
     *enemyX = *playerX + 800.0f;
-    // Asegurar que no se salga del mapa
     if (*enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
         *enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
     }
@@ -160,6 +178,15 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     Enemy.Counter = 0;
     Attacker.Frame = 0;
     Attacker.Counter = 0;
+
+    // Reiniciar items
+    Whip = true;
+    Star = false;
+    CollectStar = false;
+
+    // Reiniciar proyectil y cooldown
+    starBall.active = false;
+    starCooldown = 0.0f;
 
     // Cámara centrada en el jugador (Y fija en 290)
     camera->target = (Vector2){ *playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
@@ -189,9 +216,10 @@ int main() {
     Texture2D attackL_C = LoadTexture("C_A_L.png");
     Texture2D enemyTex = LoadTexture("Zombie_L.png");
     Texture2D fondo = LoadTexture("maapa.png");
-    Texture2D Weapon2 = LoadTexture("Item_Star.png");
-    Texture2D Item1 = LoadTexture("Item_Image1.png");
-    Texture2D Item2 = LoadTexture("Item_Image2.png");
+    Texture2D Weapon2 = LoadTexture("Item_Star.png");       // Ítem estrella en el suelo
+    Texture2D Item1 = LoadTexture("Item_Image1.png");       // Icono látigo HUD
+    Texture2D Item2 = LoadTexture("Item_Image2.png");       // Icono estrella HUD
+    Texture2D starProjectileTex = LoadTexture("Item_Star_2.png"); // Sprite del proyectil
 
     SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
 
@@ -234,10 +262,6 @@ int main() {
     float enemyX, enemyY;
     float enemySpeed = 2.0f;
 
-    // ------------------ [ITEMS] -----------------
-    bool Whip = true;
-    bool Star = false;
-    bool CollectStar = false;
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
 
@@ -259,8 +283,11 @@ int main() {
     bool CloseIt = false;
 
     // Bucle principal
-    while (CloseIt == 0 && !WindowShouldClose()) 
+    while (CloseIt == 0 && !WindowShouldClose())
     {
+        // Delta time para cooldown
+        float delta = GetFrameTime();
+
         UpdateMusicStream(musicaFondo);
         UpdateMusicStream(Stage01);
 
@@ -269,6 +296,12 @@ int main() {
             AnimationSettings();
             SetMusicVolume(musicaFondo, 0);
             SetMusicVolume(Stage01, 1.0f);
+
+            // Reducir el cooldown de la estrella
+            if (starCooldown > 0.0f) {
+                starCooldown -= delta;
+                if (starCooldown < 0.0f) starCooldown = 0.0f;
+            }
         }
 
         // ---------- Actualización según estado ----------
@@ -319,10 +352,11 @@ int main() {
             }
             break;
         }
-      
+
         case EXIT:
         {
             CloseIt = true;
+            break;
         }
 
         case PLAYING: {
@@ -333,18 +367,33 @@ int main() {
             isAttacking = false;
 
             if (!isJumping) {
-                if (attackKey) 
+                if (attackKey && Whip)
                 {
                     AnimationSettings();
                     isAttacking = true;
                     canMove = false;
                 }
-                else if (duckKey) 
+                else if (attackKey && Star)
+                {
+                    // Lanzar proyectil solo si está activo el cooldown a cero y no hay otro en pantalla
+                    if (!starBall.active && starCooldown <= 0.0f) {
+                        starBall.active = true;
+                        starBall.distance = 0.0f;
+                        // Posición inicial: centro del jugador
+                        starBall.x = playerX + PLAYER_HITBOX_WIDTH / 2.0f;
+                        starBall.y = playerY + PLAYER_HITBOX_HEIGHT / 2.0f;
+                        // Dirección según hacia dónde mira
+                        starBall.direction = (direction == 0) ? 1.0f : -1.0f;
+                        starCooldown = STAR_COOLDOWN_TIME; // Iniciar cooldown
+                    }
+                    canMove = true;
+                }
+                else if (duckKey)
                 {
                     isDucking = true;
                     canMove = false;
                 }
-                else 
+                else
                 {
                     canMove = true;
                 }
@@ -485,41 +534,38 @@ int main() {
                 }
 
                 if (playerX < 0) playerX = 0;
+            }
 
-                // ----- DETECCIÓN DE VICTORIA (CON TOLERANCIA) -----
-                // Se activa cuando la hitbox del jugador toca (o casi toca) la pared derecha.
-                // La pared derecha está en la columna MAP_WIDTH-1.
-                float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f; // 1 píxel de margen
-                if (playerX + PLAYER_HITBOX_WIDTH >= victoryThreshold) {
-                    gameState = WIN;
-                    winSelection = 0;
+            // ---------- ACTUALIZAR PROYECTIL (BOLA ROJA) ----------
+            if (starBall.active) {
+                starBall.x += starBall.direction * PROJECTILE_SPEED;
+                starBall.distance += PROJECTILE_SPEED;
+                if (starBall.distance >= PROJECTILE_RANGE) {
+                    starBall.active = false;
                 }
             }
 
             // ----- COMPORTAMIENTO DEL ENEMIGO -----
-            // Movimiento hacia la izquierda
             enemyX -= enemySpeed;
 
-            // Si el enemigo está 800 px a la izquierda del jugador, lo recolocamos 800 px a la derecha
             if (playerX - enemyX >= 800.0f) {
                 enemyX = playerX + 800.0f;
-                // Asegurar que no se salga del mapa por la derecha
                 if (enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
                     enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
                 }
             }
 
-            // Ajustar altura del enemigo al suelo
             enemyY = GetEnemyGroundHeight(enemyX);
 
-            // Colisión jugador - enemigo (usando hitbox reducida del jugador)
-            if (playerActive) 
+            // Colisiones con el enemigo
+            if (playerActive)
             {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
                 Rectangle attackHitboxR = { playerX + 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
                 Rectangle attackHitboxL = { playerX - 10, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
-               
+
+                // Colisión del látigo
                 if (attackKey && Whip)
                 {
                     if (direction == 0)
@@ -536,9 +582,31 @@ int main() {
                             enemyX = playerX + 800;
                         }
                     }
-                   
                 }
-                if (CheckCollisionRecs(playerHitbox, enemyRect)) 
+
+                // Colisión del proyectil (estrella) con el enemigo
+                if (starBall.active)
+                {
+                    Rectangle projectileRect = {
+                        starBall.x - ITEM_WIDTH / 2.0f,
+                        starBall.y - ITEM_HEIGHT / 2.0f,
+                        ITEM_WIDTH,
+                        ITEM_HEIGHT
+                    };
+                    if (CheckCollisionRecs(projectileRect, enemyRect))
+                    {
+                        // Recolocar enemigo
+                        enemyX = playerX + 800.0f;
+                        if (enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
+                            enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
+                        }
+                        // Desaparecer proyectil
+                        starBall.active = false;
+                    }
+                }
+
+                // Colisión jugador - enemigo
+                if (CheckCollisionRecs(playerHitbox, enemyRect))
                 {
                     playerActive = false;
                     gameState = GAMEOVER;
@@ -546,8 +614,15 @@ int main() {
                 }
             }
 
-            // Actualizar cámara (centrada en el jugador)
+            // Actualizar cámara
             camera.target = (Vector2){ playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
+
+            // ----- DETECCIÓN DE VICTORIA -----
+            float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f;
+            if (playerX + PLAYER_HITBOX_WIDTH >= victoryThreshold) {
+                gameState = WIN;
+                winSelection = 0;
+            }
             break;
         }
 
@@ -613,7 +688,7 @@ int main() {
                     menuSelection = 0;
                 }
                 else if (winSelection == 1) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             Vector2 mousePos = GetMousePosition();
@@ -629,7 +704,7 @@ int main() {
             else if (CheckCollisionPointRec(mousePos, exitBtn)) {
                 winSelection = 1;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    break;
+                    gameState = EXIT;
                 }
             }
             break;
@@ -728,7 +803,17 @@ int main() {
                 }
             }
 
-            //Item Frame
+            // ---------- DIBUJAR PROYECTIL (Sprite de estrella) ----------
+            if (starBall.active) {
+                // Dibujar centrado en la posición del proyectil
+                DrawTextureEx(starProjectileTex,
+                    (Vector2) {
+                    starBall.x - ITEM_WIDTH / 2.0f, starBall.y - ITEM_HEIGHT / 2.0f
+                },
+                    0, 1.0f, WHITE);
+            }
+
+            // Selección de ítem en el HUD (respecto a la cámara)
             if (IsKeyPressed(KEY_ONE))
             {
                 Whip = true;
@@ -747,10 +832,8 @@ int main() {
             {
                 DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
-            
 
-            //Dibujar Arma 02
-
+            // Estrella en el suelo (solo si no se ha recogido)
             if (CollectStar == false)
             {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
@@ -762,11 +845,7 @@ int main() {
                 }
             }
 
-            
-           
-            
-
-            // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
+            // Indicadores visuales de depuración
             DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
             DrawRectangle((MAP_WIDTH - 1) * TILE_SIZE, 0, TILE_SIZE, MAP_HEIGHT * TILE_SIZE, (Color) { 255, 0, 0, 100 });
 
@@ -775,7 +854,6 @@ int main() {
         }
 
         case GAMEOVER: {
-            UnloadMusicStream(Stage01);
             const char* gameOverText = "GAME OVER";
             int goFontSize = 40;
             int goWidth = MeasureText(gameOverText, goFontSize);
@@ -841,6 +919,7 @@ int main() {
     UnloadTexture(enemyTex);
     UnloadTexture(Item1);
     UnloadTexture(Item2);
+    UnloadTexture(starProjectileTex);   // Nueva textura
     UnloadTexture(fondo);
     CloseWindow();
     return 0;
