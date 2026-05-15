@@ -207,10 +207,8 @@ int main() {
     SetMusicVolume(musicaFondo, 1.0f);
     SetMusicPan(musicaFondo, 1.0f);
     PlayMusicStream(musicaFondo);
-
-    SetMusicVolume(Stage01, 0);
-    SetMusicPan(Stage01, 0);
     PlayMusicStream(Stage01);
+    
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
@@ -240,7 +238,7 @@ int main() {
     bool CollectStar = false;
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
-
+    
     // Velocidades de animación
     Spring.Speed = 6;
     Enemy.Speed = 7;
@@ -257,20 +255,20 @@ int main() {
     SetTargetFPS(60);
 
     bool CloseIt = false;
-
+    bool Music01 = false;
     // Bucle principal
     while (CloseIt == 0 && !WindowShouldClose()) 
     {
         UpdateMusicStream(musicaFondo);
-        UpdateMusicStream(Stage01);
+        
 
         // Actualizar animaciones (se hace siempre durante el juego)
         if (gameState == PLAYING) {
             AnimationSettings();
+            Music01 = true;
             SetMusicVolume(musicaFondo, 0);
-            SetMusicVolume(Stage01, 1.0f);
         }
-
+        
         // ---------- Actualización según estado ----------
         switch (gameState) {
         case MENU: {
@@ -326,6 +324,12 @@ int main() {
         }
 
         case PLAYING: {
+            if (Music01)
+            {
+                
+                UpdateMusicStream(Stage01);
+            }
+
             // Determinar estados de agacharse y atacar (solo en suelo, no saltando)
             bool duckKey = IsKeyDown(KEY_LEFT_SHIFT);
             bool attackKey = IsKeyDown(KEY_E);
@@ -775,7 +779,7 @@ int main() {
         }
 
         case GAMEOVER: {
-            UnloadMusicStream(Stage01);
+            
             const char* gameOverText = "GAME OVER";
             int goFontSize = 40;
             int goWidth = MeasureText(gameOverText, goFontSize);
