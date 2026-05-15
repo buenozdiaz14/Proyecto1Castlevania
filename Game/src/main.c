@@ -168,6 +168,36 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     camera->zoom = 2.0f;
 }
 
+// define a timer
+typedef struct
+{
+    float Lifetime;
+}Timer;
+
+// start or restart a timer with a specific lifetime
+void StartTimer(Timer* timer, float lifetime)
+{
+    if (timer != NULL)
+        timer->Lifetime = lifetime;
+}
+
+// update a timer with the current frame time
+void UpdateTimer(Timer* timer)
+{
+    // subtract this frame from the timer if it's not allready expired
+    if (timer != NULL && timer->Lifetime > 0)
+        timer->Lifetime -= GetFrameTime();
+}
+
+// check if a timer is done.
+bool TimerDone(Timer* timer)
+{
+    if (timer != NULL)
+        return timer->Lifetime <= 0;
+
+	return false;
+}
+
 int main() {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "_C4STL3V4N14_");
@@ -235,7 +265,9 @@ int main() {
     // ------------------ [ITEMS] -----------------
     bool Whip = true;
     bool Star = false;
-    bool CollectStar = false;
+    bool CollectStar = 0;
+    float Warning = 2.0f;
+    Timer Collection = { 0 };
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
     
@@ -762,10 +794,44 @@ int main() {
                 DrawTextureEx(Weapon2, (Vector2) { 400, 358 }, 0, 1, WHITE);
                 if (CheckCollisionRecs(playerHitbox, StarHitbox))
                 {
+                    StartTimer(&Collection, Warning);
                     CollectStar = true;
                 }
             }
-
+            UpdateTimer(&Collection);
+            int Tick = 0;
+            if (!TimerDone(&Collection))
+            {
+                Tick++;
+                if (Tick % 2 == 0)
+                {
+                    DrawRectangle(400, 358, MeasureText("PRESS 2!!!", 10), 10, BLACK);
+                    DrawText("PRESS 2!!!", 400, 358, 10, RED);
+                }
+                else
+                {
+                    DrawRectangle(400, 358, MeasureText("PRESS 2!!!", 10), 10, BLACK);
+                    DrawText("PRESS 2!!!", 400, 358, 10, WHITE);
+                }
+                Tick++;
+            }
+            /*if (CollectStar == true)
+            {
+                int Width = MeasureText("PRESS 2!!!", 25);
+                int Allocate[100];
+                int j = 0;
+                for (int i = 0; i < 99; i++);
+                {
+                    Allocate[i] = j++;
+                    if (j / 2 == 0)
+                    {
+                        DrawText("PRESS 2!!!", 400, 358 + j, 25, RED);
+                    }
+                    else
+                        DrawText("PRESS 2!!!", 400, 358 + j, 25, WHITE);
+                }
+            }*/
+            
             
            
             
@@ -779,7 +845,6 @@ int main() {
         }
 
         case GAMEOVER: {
-            
             const char* gameOverText = "GAME OVER";
             int goFontSize = 40;
             int goWidth = MeasureText(gameOverText, goFontSize);
