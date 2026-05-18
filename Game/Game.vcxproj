@@ -340,6 +340,7 @@
     <Image Include="resources\Jumper.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\TUTORIAL.png" />
+    <Image Include="resources\VAMP.png" />
     <Image Include="resources\Walking_L.png" />
     <Image Include="resources\Walking_R.png" />
     <Image Include="resources\Zombie_L.png" />

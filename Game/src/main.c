@@ -223,6 +223,8 @@ int main() {
     Texture2D Item1 = LoadTexture("Item_Image1.png");
     Texture2D Item2 = LoadTexture("Item_Image2.png");
 
+    Texture2D DRACULA = LoadTexture("VAMP.png");
+
     SetTextureFilter(fondo, TEXTURE_FILTER_POINT);
 
     // ------------------ Variables de estado -----------------
@@ -268,6 +270,7 @@ int main() {
     bool CollectStar = 0;
     float Warning = 2.0f;
     Timer Collection = { 0 };
+    Timer Tutorial = { 0 };
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
     
@@ -702,7 +705,7 @@ int main() {
             BeginMode2D(camera);
 
             DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
-
+           
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 for (int x = 0; x < MAP_WIDTH; x++) {
                     if (map[y][x] == 1) {
@@ -710,11 +713,14 @@ int main() {
                     }
                 }
             }
+            
 
             // Dibujar enemigo
             Rectangle enemySource = { Enemy.Frame * 17, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
             Rectangle enemyDest = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
             DrawTexturePro(enemyTex, enemySource, enemyDest, (Vector2) { 0, 0 }, 0, WHITE);
+
+            DrawRectangle(playerX - 200, 395, SCREEN_WIDTH, 210, BLACK);
 
             if (playerActive) {
                 Rectangle source;
@@ -784,6 +790,15 @@ int main() {
                 DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
             
+            //Dibujar TUTORIAL
+            
+            UpdateTimer(&Tutorial);
+            if (!TimerDone(&Tutorial))
+            {
+                DrawTextureEx(DRACULA, (Vector2) { playerX - 150, 400 }, 0, 1, WHITE);
+            }
+           
+            
 
             //Dibujar Arma 02
 
@@ -798,12 +813,13 @@ int main() {
                     CollectStar = true;
                 }
             }
+
             UpdateTimer(&Collection);
             int Tick = 0;
             if (!TimerDone(&Collection))
             {
-                Tick++;
-                if (Tick % 2 == 0)
+                
+                if (Tick / 2 == 0)
                 {
                     DrawRectangle(400, 358, MeasureText("PRESS 2!!!", 10), 10, BLACK);
                     DrawText("PRESS 2!!!", 400, 358, 10, RED);
