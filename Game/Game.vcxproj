@@ -338,6 +338,7 @@
     <Image Include="resources\Jump_L.png" />
     <Image Include="resources\Jump_R.png" />
     <Image Include="resources\Jumper.png" />
+    <Image Include="resources\LAUGH.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\TUTORIAL.png" />
     <Image Include="resources\VAMP.png" />

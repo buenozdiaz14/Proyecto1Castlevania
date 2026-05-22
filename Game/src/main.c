@@ -55,7 +55,8 @@ typedef enum GameState {
     PLAYING,
     GAMEOVER,
     WIN,
-    EXIT
+    EXIT,
+    TUTORIAL
 } GameState;
 
 // Estructura para animaciones (personaje y enemigo)
@@ -241,6 +242,8 @@ int main() {
     PlayMusicStream(musicaFondo);
     PlayMusicStream(Stage01);
     
+    bool TutorialStart = false;
+    float Tick = 0;
 
     // ------------------ Variables del jugador -----------------
     float playerX, playerY;
@@ -271,6 +274,7 @@ int main() {
     float Warning = 2.0f;
     Timer Collection = { 0 };
     Timer Tutorial = { 0 };
+    
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
     
@@ -317,13 +321,9 @@ int main() {
             }
             if (IsKeyPressed(KEY_ENTER)) {
                 if (menuSelection == 0) {
-                    gameState = PLAYING;
-                    ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
-                        &canMove, &isJumping, &jumpDirection,
-                        &verticalSpeed, &horizontalSpeed,
-                        &enemyX, &enemyY, &playerActive, &direction,
-                        &isDucking, &isAttacking,
-                        &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+                    gameState = TUTORIAL;
+                   
+                    TutorialStart = true;
                 }
                 else if (menuSelection == 1) {
                     gameState = EXIT;
@@ -335,13 +335,9 @@ int main() {
             if (CheckCollisionPointRec(mousePos, playBtn)) {
                 menuSelection = 0;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    gameState = PLAYING;
-                    ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
-                        &canMove, &isJumping, &jumpDirection,
-                        &verticalSpeed, &horizontalSpeed,
-                        &enemyX, &enemyY, &playerActive, &direction,
-                        &isDucking, &isAttacking,
-                        &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+                    gameState = TUTORIAL;
+                
+                    TutorialStart = true;
                 }
             }
             else if (CheckCollisionPointRec(mousePos, exitBtn)) {
@@ -358,10 +354,46 @@ int main() {
             CloseIt = true;
         }
 
+        case TUTORIAL:
+        {
+            //Dibujar TUTORIAL
+            playerX = 0;
+            if (TutorialStart)
+            {
+                StartTimer(&Tutorial, 6.0f);
+                TutorialStart = false;
+            }
+            UpdateTimer(&Tutorial);
+            if (!TimerDone(&Tutorial))
+            {
+                Tick += 0.1f;
+                DrawTextureEx(DRACULA, (Vector2) { (SCREEN_WIDTH - 120) / 2, SCREEN_HEIGHT / 2 - 60}, 0, 2, WHITE);
+
+                if (Tick >= 20.0f)
+                {
+                    DrawText("You only have one life.\nI hope you fail.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2+50, 20, RED);
+                }
+                else
+                {
+                    DrawText("You can press E to attack.\nYou can crouch with Shift.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2+50, 20, RED);
+                }
+
+            }
+            if (TimerDone(&Tutorial))
+            {
+                ResetGame(&playerX, &playerY, &velocityY, &isGrounded,
+                    &canMove, &isJumping, &jumpDirection,
+                    &verticalSpeed, &horizontalSpeed,
+                    &enemyX, &enemyY, &playerActive, &direction,
+                    &isDucking, &isAttacking,
+                    &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+                gameState = PLAYING;
+            }
+        }
+
         case PLAYING: {
             if (Music01)
             {
-                
                 UpdateMusicStream(Stage01);
             }
 
@@ -685,15 +717,15 @@ int main() {
             int titleFontSize = 30;
             int titleWidth = MeasureText(title, titleFontSize);
             DrawText(title, (SCREEN_WIDTH - titleWidth) / 2, SCREEN_HEIGHT / 2 - 80, titleFontSize, RED);
-            const char* playText = "Play";
-            const char* exitText = "Exit";
+            const char* playText = "Enter ?\n ";
+            const char* exitText = "Run Away \n[Coward.]";
             int optionFontSize = 30;
             int playWidth = MeasureText(playText, optionFontSize);
             int exitWidth = MeasureText(exitText, optionFontSize);
             Color playColor = (menuSelection == 0) ? YELLOW : WHITE;
             Color exitColor = (menuSelection == 1) ? YELLOW : WHITE;
             DrawText(playText, (SCREEN_WIDTH - playWidth) / 2, SCREEN_HEIGHT / 2 - 20, optionFontSize, playColor);
-            DrawText(exitText, (SCREEN_WIDTH - exitWidth) / 2, SCREEN_HEIGHT / 2 + 20, optionFontSize, exitColor);
+            DrawText(exitText, (SCREEN_WIDTH - exitWidth) / 2, SCREEN_HEIGHT / 2 + 30, optionFontSize, exitColor);
             const char* instr = "Use ARROWS and ENTER or click";
             int instrFontSize = 15;
             int instrWidth = MeasureText(instr, instrFontSize);
@@ -790,14 +822,6 @@ int main() {
                 DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
             
-            //Dibujar TUTORIAL
-            
-            UpdateTimer(&Tutorial);
-            if (!TimerDone(&Tutorial))
-            {
-                DrawTextureEx(DRACULA, (Vector2) { playerX - 150, 400 }, 0, 1, WHITE);
-            }
-           
             
 
             //Dibujar Arma 02
@@ -811,15 +835,16 @@ int main() {
                 {
                     StartTimer(&Collection, Warning);
                     CollectStar = true;
+                    Tick = 0;
                 }
             }
 
             UpdateTimer(&Collection);
-            int Tick = 0;
+            
             if (!TimerDone(&Collection))
             {
-                
-                if (Tick / 2 == 0)
+                Tick += 0.1f;
+                if ((int)Tick % 2 == 0)
                 {
                     DrawRectangle(400, 358, MeasureText("PRESS 2!!!", 10), 10, BLACK);
                     DrawText("PRESS 2!!!", 400, 358, 10, RED);
@@ -829,28 +854,8 @@ int main() {
                     DrawRectangle(400, 358, MeasureText("PRESS 2!!!", 10), 10, BLACK);
                     DrawText("PRESS 2!!!", 400, 358, 10, WHITE);
                 }
-                Tick++;
             }
-            /*if (CollectStar == true)
-            {
-                int Width = MeasureText("PRESS 2!!!", 25);
-                int Allocate[100];
-                int j = 0;
-                for (int i = 0; i < 99; i++);
-                {
-                    Allocate[i] = j++;
-                    if (j / 2 == 0)
-                    {
-                        DrawText("PRESS 2!!!", 400, 358 + j, 25, RED);
-                    }
-                    else
-                        DrawText("PRESS 2!!!", 400, 358 + j, 25, WHITE);
-                }
-            }*/
-            
-            
-           
-            
+
 
             // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
             DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
@@ -866,7 +871,7 @@ int main() {
             int goWidth = MeasureText(gameOverText, goFontSize);
             DrawText(gameOverText, (SCREEN_WIDTH - goWidth) / 2, SCREEN_HEIGHT / 2 - 60, goFontSize, RED);
             const char* tryAgainText = "Try Again";
-            const char* exitText = "Exit";
+            const char* exitText = "PERISH";
             int optFontSize = 25;
             int tryAgainWidth = MeasureText(tryAgainText, optFontSize);
             int exitWidth = MeasureText(exitText, optFontSize);

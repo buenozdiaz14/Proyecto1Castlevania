@@ -116,6 +116,9 @@
     <Image Include="resources\TUTORIAL.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\VAMP.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\Walking_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
@@ -134,7 +137,7 @@
     <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\VAMP.png">
+    <Image Include="resources\LAUGH.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>
