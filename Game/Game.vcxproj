@@ -322,6 +322,7 @@
     <Image Include="resources\Attack_L - Rework.png" />
     <Image Include="resources\Attack_L.png" />
     <Image Include="resources\Attack_R.png" />
+    <Image Include="resources\boss_castlevania.png" />
     <Image Include="resources\C_A_L.png" />
     <Image Include="resources\C_A_R.png" />
     <Image Include="resources\Crouch_L.png" />
@@ -340,6 +341,7 @@
     <Image Include="resources\Jumper.png" />
     <Image Include="resources\LAUGH.png" />
     <Image Include="resources\maapa.png" />
+    <Image Include="resources\Map2.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\TUTORIAL.png" />
     <Image Include="resources\VAMP.png" />

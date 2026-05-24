@@ -140,5 +140,11 @@
     <Image Include="resources\maapa.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\Map2.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\boss_castlevania.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
