@@ -339,6 +339,7 @@
     <Image Include="resources\Jump_R.png" />
     <Image Include="resources\Jumper.png" />
     <Image Include="resources\LAUGH.png" />
+    <Image Include="resources\maapa.png" />
     <Image Include="resources\OtherSide.png" />
     <Image Include="resources\TUTORIAL.png" />
     <Image Include="resources\VAMP.png" />
@@ -346,7 +347,6 @@
     <Image Include="resources\Walking_R.png" />
     <Image Include="resources\Zombie_L.png" />
     <Image Include="resources\castelvania.png" />
-    <Image Include="resources\maapa.png" />
     <Image Include="resources\wabbit_alpha.png" />
   </ItemGroup>
   <ItemGroup>

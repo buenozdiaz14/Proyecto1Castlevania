@@ -31,8 +31,6 @@
 #define MAP_WIDTH     250
 #define MAP_HEIGHT    12   // Ajustado a las filas reales definidas en map[][]
 
-
-
 // Mapa (12 filas de alto, 250 columnas de ancho)
 int map[MAP_HEIGHT][MAP_WIDTH] = {
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -73,6 +71,21 @@ struct AttackAnimation {
     int Speed;
 } Attacker;
 
+// ---------- NUEVO: Proyectil para la estrella ----------
+typedef struct Projectile {
+    bool active;
+    float x, y;
+    float direction;   // 1 = derecha, -1 = izquierda
+    float distance;
+} Projectile;
+
+// Variables globales del proyectil
+Projectile starBall = { false, 0, 0, 1, 0 };
+#define PROJECTILE_SPEED 5.0f
+#define PROJECTILE_RANGE 400.0f
+float starCooldown = 0.0f;
+#define STAR_COOLDOWN_TIME 1.0f
+
 // Actualiza frames de animación
 void AnimationSettings() {
     // Animación del personaje (caminar, saltar) - 3 frames
@@ -90,7 +103,7 @@ void AnimationSettings() {
         Enemy.Frame++;
         if (Enemy.Frame > 2) Enemy.Frame = 0;
     }
-    
+
     if (IsKeyDown(KEY_E))
     {
         // Animación de ataque - 6 frames (0 a 5)
@@ -162,6 +175,10 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     Attacker.Frame = 0;
     Attacker.Counter = 0;
 
+    // NUEVO: Reiniciar proyectil y cooldown
+    starBall.active = false;
+    starCooldown = 0.0f;
+
     // Cámara centrada en el jugador (Y fija en 290)
     camera->target = (Vector2){ *playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
     camera->offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
@@ -196,7 +213,7 @@ bool TimerDone(Timer* timer)
     if (timer != NULL)
         return timer->Lifetime <= 0;
 
-	return false;
+    return false;
 }
 
 int main() {
@@ -223,6 +240,7 @@ int main() {
     Texture2D Weapon2 = LoadTexture("Item_Star.png");
     Texture2D Item1 = LoadTexture("Item_Image1.png");
     Texture2D Item2 = LoadTexture("Item_Image2.png");
+    Texture2D starProjectileTex = LoadTexture("Item_Star_2.png");  // NUEVO: textura del proyectil
 
     Texture2D DRACULA = LoadTexture("VAMP.png");
 
@@ -241,7 +259,7 @@ int main() {
     SetMusicPan(musicaFondo, 1.0f);
     PlayMusicStream(musicaFondo);
     PlayMusicStream(Stage01);
-    
+
     bool TutorialStart = false;
     float Tick = 0;
 
@@ -274,10 +292,10 @@ int main() {
     float Warning = 2.0f;
     Timer Collection = { 0 };
     Timer Tutorial = { 0 };
-    
+
     // ------------------ Cámara -----------------
     Camera2D camera = { 0 };
-    
+
     // Velocidades de animación
     Spring.Speed = 6;
     Enemy.Speed = 7;
@@ -296,21 +314,28 @@ int main() {
     bool CloseIt = false;
     bool Music01 = false;
     // Bucle principal
-    while (CloseIt == 0 && !WindowShouldClose()) 
+    while (CloseIt == 0 && !WindowShouldClose())
     {
+        float delta = GetFrameTime();
         UpdateMusicStream(musicaFondo);
-        
 
         // Actualizar animaciones (se hace siempre durante el juego)
         if (gameState == PLAYING) {
             AnimationSettings();
             Music01 = true;
             SetMusicVolume(musicaFondo, 0);
+
+            // NUEVO: Reducir cooldown del disparo
+            if (starCooldown > 0.0f) {
+                starCooldown -= delta;
+                if (starCooldown < 0.0f) starCooldown = 0.0f;
+            }
         }
-        
+
         // ---------- Actualización según estado ----------
         switch (gameState) {
         case MENU: {
+            // ... (sin cambios) ...
             if (IsKeyPressed(KEY_UP)) {
                 menuSelection--;
                 if (menuSelection < 0) menuSelection = 1;
@@ -322,7 +347,6 @@ int main() {
             if (IsKeyPressed(KEY_ENTER)) {
                 if (menuSelection == 0) {
                     gameState = TUTORIAL;
-                   
                     TutorialStart = true;
                 }
                 else if (menuSelection == 1) {
@@ -336,7 +360,6 @@ int main() {
                 menuSelection = 0;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     gameState = TUTORIAL;
-                
                     TutorialStart = true;
                 }
             }
@@ -348,15 +371,15 @@ int main() {
             }
             break;
         }
-      
+
         case EXIT:
         {
             CloseIt = true;
+            break;
         }
 
         case TUTORIAL:
         {
-            //Dibujar TUTORIAL
             playerX = 0;
             if (TutorialStart)
             {
@@ -367,17 +390,15 @@ int main() {
             if (!TimerDone(&Tutorial))
             {
                 Tick += 0.1f;
-                DrawTextureEx(DRACULA, (Vector2) { (SCREEN_WIDTH - 120) / 2, SCREEN_HEIGHT / 2 - 60}, 0, 2, WHITE);
-
+                DrawTextureEx(DRACULA, (Vector2) { (SCREEN_WIDTH - 120) / 2, SCREEN_HEIGHT / 2 - 60 }, 0, 2, WHITE);
                 if (Tick >= 20.0f)
                 {
-                    DrawText("You only have one life.\nI hope you fail.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2+50, 20, RED);
+                    DrawText("You only have one life.\nI hope you fail.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2 + 50, 20, RED);
                 }
                 else
                 {
-                    DrawText("You can press E to attack.\nYou can crouch with Shift.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2+50, 20, RED);
+                    DrawText("You can press E to attack.\nYou can crouch with Shift.", (SCREEN_WIDTH - 250) / 2, SCREEN_HEIGHT / 2 + 50, 20, RED);
                 }
-
             }
             if (TimerDone(&Tutorial))
             {
@@ -389,6 +410,7 @@ int main() {
                     &camera, SCREEN_WIDTH, SCREEN_HEIGHT);
                 gameState = PLAYING;
             }
+            break;
         }
 
         case PLAYING: {
@@ -397,25 +419,40 @@ int main() {
                 UpdateMusicStream(Stage01);
             }
 
-            // Determinar estados de agacharse y atacar (solo en suelo, no saltando)
+            // Determinar estados de agacharse y atacar
             bool duckKey = IsKeyDown(KEY_LEFT_SHIFT);
             bool attackKey = IsKeyDown(KEY_E);
             isDucking = false;
             isAttacking = false;
 
             if (!isJumping) {
-                if (attackKey) 
+                // NUEVO: Diferenciar entre látigo y estrella
+                if (attackKey && Whip)
                 {
                     AnimationSettings();
                     isAttacking = true;
                     canMove = false;
                 }
-                else if (duckKey) 
+                else if (attackKey && Star)
+                {
+                    // Disparar proyectil si no hay uno activo y el cooldown ha terminado
+                    if (!starBall.active && starCooldown <= 0.0f) {
+                        starBall.active = true;
+                        starBall.distance = 0.0f;
+                        starBall.x = playerX + PLAYER_HITBOX_WIDTH / 2.0f;
+                        starBall.y = playerY + PLAYER_HITBOX_HEIGHT / 2.0f;
+                        starBall.direction = (direction == 0) ? 1.0f : -1.0f;
+                        starCooldown = STAR_COOLDOWN_TIME;
+                    }
+                    // Con la estrella no se bloquea el movimiento
+                    canMove = true;
+                }
+                else if (duckKey)
                 {
                     isDucking = true;
                     canMove = false;
                 }
-                else 
+                else
                 {
                     canMove = true;
                 }
@@ -434,7 +471,6 @@ int main() {
                         direction = 1;
                     }
 
-                    // Colisión horizontal con la hitbox reducida
                     int topTile = (int)(playerY) / TILE_SIZE;
                     int bottomTile = (int)(playerY + PLAYER_HITBOX_HEIGHT - 1) / TILE_SIZE;
                     if (newX > playerX) {
@@ -557,40 +593,43 @@ int main() {
 
                 if (playerX < 0) playerX = 0;
 
-                // ----- DETECCIÓN DE VICTORIA (CON TOLERANCIA) -----
-                // Se activa cuando la hitbox del jugador toca (o casi toca) la pared derecha.
-                // La pared derecha está en la columna MAP_WIDTH-1.
-                float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f; // 1 píxel de margen
+                // ----- DETECCIÓN DE VICTORIA -----
+                float victoryThreshold = (MAP_WIDTH - 1) * TILE_SIZE - 1.0f;
                 if (playerX + PLAYER_HITBOX_WIDTH >= victoryThreshold) {
                     gameState = WIN;
                     winSelection = 0;
                 }
             }
 
+            // NUEVO: Actualizar proyectil
+            if (starBall.active) {
+                starBall.x += starBall.direction * PROJECTILE_SPEED;
+                starBall.distance += PROJECTILE_SPEED;
+                if (starBall.distance >= PROJECTILE_RANGE) {
+                    starBall.active = false;
+                }
+            }
+
             // ----- COMPORTAMIENTO DEL ENEMIGO -----
-            // Movimiento hacia la izquierda
             enemyX -= enemySpeed;
 
-            // Si el enemigo está 800 px a la izquierda del jugador, lo recolocamos 800 px a la derecha
             if (playerX - enemyX >= 800.0f) {
                 enemyX = playerX + 800.0f;
-                // Asegurar que no se salga del mapa por la derecha
                 if (enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
                     enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
                 }
             }
 
-            // Ajustar altura del enemigo al suelo
             enemyY = GetEnemyGroundHeight(enemyX);
 
-            // Colisión jugador - enemigo (usando hitbox reducida del jugador)
-            if (playerActive) 
+            // Colisiones con el enemigo
+            if (playerActive)
             {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
                 Rectangle enemyRect = { enemyX, enemyY, ENEMY_WIDTH, ENEMY_HEIGHT };
                 Rectangle attackHitboxR = { playerX + 16, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
                 Rectangle attackHitboxL = { playerX - 10, playerY, ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT };
-               
+
                 if (attackKey && Whip)
                 {
                     if (direction == 0)
@@ -607,9 +646,28 @@ int main() {
                             enemyX = playerX + 800;
                         }
                     }
-                   
                 }
-                if (CheckCollisionRecs(playerHitbox, enemyRect)) 
+
+                // NUEVO: Colisión del proyectil con el enemigo
+                if (starBall.active)
+                {
+                    Rectangle projectileRect = {
+                        starBall.x - ITEM_WIDTH / 2.0f,
+                        starBall.y - ITEM_HEIGHT / 2.0f,
+                        ITEM_WIDTH,
+                        ITEM_HEIGHT
+                    };
+                    if (CheckCollisionRecs(projectileRect, enemyRect))
+                    {
+                        enemyX = playerX + 800.0f;
+                        if (enemyX + ENEMY_WIDTH > MAP_WIDTH * TILE_SIZE) {
+                            enemyX = MAP_WIDTH * TILE_SIZE - ENEMY_WIDTH;
+                        }
+                        starBall.active = false;
+                    }
+                }
+
+                if (CheckCollisionRecs(playerHitbox, enemyRect))
                 {
                     playerActive = false;
                     gameState = GAMEOVER;
@@ -617,12 +675,13 @@ int main() {
                 }
             }
 
-            // Actualizar cámara (centrada en el jugador)
+            // Actualizar cámara
             camera.target = (Vector2){ playerX + PLAYER_HITBOX_WIDTH / 2, 290.0f };
             break;
         }
 
         case GAMEOVER: {
+            // ... (sin cambios) ...
             if (IsKeyPressed(KEY_UP)) {
                 gameOverSelection--;
                 if (gameOverSelection < 0) gameOverSelection = 1;
@@ -670,6 +729,7 @@ int main() {
         }
 
         case WIN: {
+            // ... (sin cambios) ...
             if (IsKeyPressed(KEY_UP)) {
                 winSelection--;
                 if (winSelection < 0) winSelection = 1;
@@ -684,7 +744,7 @@ int main() {
                     menuSelection = 0;
                 }
                 else if (winSelection == 1) {
-                    break;
+                    CloseIt = true;
                 }
             }
             Vector2 mousePos = GetMousePosition();
@@ -700,7 +760,7 @@ int main() {
             else if (CheckCollisionPointRec(mousePos, exitBtn)) {
                 winSelection = 1;
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    break;
+                    CloseIt = true;
                 }
             }
             break;
@@ -713,6 +773,7 @@ int main() {
 
         switch (gameState) {
         case MENU: {
+            // ... (sin cambios) ...
             const char* title = "CASTLEVANIA";
             int titleFontSize = 30;
             int titleWidth = MeasureText(title, titleFontSize);
@@ -737,7 +798,7 @@ int main() {
             BeginMode2D(camera);
 
             DrawTextureEx(fondo, (Vector2) { 0, 0 }, 0, 2.0f, WHITE);
-           
+
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 for (int x = 0; x < MAP_WIDTH; x++) {
                     if (map[y][x] == 1) {
@@ -745,7 +806,6 @@ int main() {
                     }
                 }
             }
-            
 
             // Dibujar enemigo
             Rectangle enemySource = { Enemy.Frame * 17, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
@@ -802,6 +862,16 @@ int main() {
                 }
             }
 
+            // NUEVO: Dibujar proyectil estrella
+            if (starBall.active) {
+                DrawTextureEx(starProjectileTex,
+                    (Vector2) {
+                    starBall.x - ITEM_WIDTH / 2.0f,
+                        starBall.y - ITEM_HEIGHT / 2.0f
+                },
+                    0, 1.0f, WHITE);
+            }
+
             //Item Frame
             if (IsKeyPressed(KEY_ONE))
             {
@@ -821,11 +891,8 @@ int main() {
             {
                 DrawTextureEx(Item2, (Vector2) { 250 + playerX, 400 }, 0, 1, WHITE);
             }
-            
-            
 
             //Dibujar Arma 02
-
             if (CollectStar == false)
             {
                 Rectangle playerHitbox = { playerX, playerY, PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT };
@@ -840,7 +907,7 @@ int main() {
             }
 
             UpdateTimer(&Collection);
-            
+
             if (!TimerDone(&Collection))
             {
                 Tick += 0.1f;
@@ -856,8 +923,7 @@ int main() {
                 }
             }
 
-
-            // Indicadores visuales de depuración (puedes comentarlos si no los necesitas)
+            // Indicadores visuales de depuración
             DrawLine(MAP_WIDTH * TILE_SIZE, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE, WHITE);
             DrawRectangle((MAP_WIDTH - 1) * TILE_SIZE, 0, TILE_SIZE, MAP_HEIGHT * TILE_SIZE, (Color) { 255, 0, 0, 100 });
 
@@ -866,6 +932,7 @@ int main() {
         }
 
         case GAMEOVER: {
+            // ... (sin cambios) ...
             const char* gameOverText = "GAME OVER";
             int goFontSize = 40;
             int goWidth = MeasureText(gameOverText, goFontSize);
@@ -887,6 +954,7 @@ int main() {
         }
 
         case WIN: {
+            // ... (sin cambios) ...
             const char* winText = "LEVEL WIN";
             int winFontSize = 40;
             int winWidth = MeasureText(winText, winFontSize);
@@ -931,6 +999,7 @@ int main() {
     UnloadTexture(enemyTex);
     UnloadTexture(Item1);
     UnloadTexture(Item2);
+    UnloadTexture(starProjectileTex);  // NUEVO
     UnloadTexture(fondo);
     CloseWindow();
     return 0;
