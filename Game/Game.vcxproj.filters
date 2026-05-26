@@ -110,6 +110,12 @@
     <Image Include="resources\Jumper.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\LAUGH.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Map2.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\OtherSide.png">
       <Filter>Game Resource Files</Filter>
     </Image>
@@ -128,22 +134,16 @@
     <Image Include="resources\Zombie_L.png">
       <Filter>Game Resource Files</Filter>
     </Image>
+    <Image Include="resources\boss_castlevania.png">
+      <Filter>Game Resource Files</Filter>
+    </Image>
     <Image Include="resources\castelvania.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\wabbit_alpha.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\LAUGH.png">
       <Filter>Game Resource Files</Filter>
     </Image>
     <Image Include="resources\maapa.png">
       <Filter>Game Resource Files</Filter>
     </Image>
-    <Image Include="resources\Map2.png">
-      <Filter>Game Resource Files</Filter>
-    </Image>
-    <Image Include="resources\boss_castlevania.png">
+    <Image Include="resources\wabbit_alpha.png">
       <Filter>Game Resource Files</Filter>
     </Image>
   </ItemGroup>

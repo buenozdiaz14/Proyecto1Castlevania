@@ -297,7 +297,7 @@ void ResetGame(float* playerX, float* playerY, float* velocityY, bool* isGrounde
     }
     else {
         *playerX = 13.0f * TILE_SIZE;
-        *playerY = 8.0f * TILE_SIZE - PLAYER_HITBOX_HEIGHT;
+        *playerY = 8.0f * TILE_SIZE - PLAYER_HITBOX_HEIGHT - 10;
     }
 
     *velocityY = 0.0f;
