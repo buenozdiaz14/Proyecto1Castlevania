@@ -12,7 +12,7 @@ estrella y derrotar al jefe final (Phantom Bat).
  CONTROLES
 ────────────────────────────────────────────
   A / D         → Moverse izquierda / derecha
-  Espacio       → Saltar
+  Espacio       → Saltar / Planear (sala del jefe)
   Shift izq.    → Agacharse
   E             → Atacar (usa el arma equipada)
   1             → Equipar látigo (ataque cuerpo a cuerpo)
@@ -34,6 +34,28 @@ estrella y derrotar al jefe final (Phantom Bat).
   pierdes una vida y aparece la pantalla de Game Over.
 - Al llegar al final del primer nivel, serás teletransportado
   a la sala del jefe final.
+
+────────────────────────────────────────────
+ MOVILIDAD EN LA SALA DEL JEFE
+────────────────────────────────────────────
+
+  Al entrar en la sala del jefe, adquieres una habilidad
+  especial que te permite moverte por el escenario con
+  ventaja:
+
+  - PLANEO: Si caminas hacia el borde de una plataforma y
+    te dejas caer (sin pulsar Espacio para saltar), tu
+    descenso será muy lento, permitiéndote planear
+    largas distancias mientras evitas el suelo.
+  - SALTO ADICIONAL: Durante ese descenso suave, puedes
+    pulsar Espacio para ejecutar un nuevo salto y
+    alcanzar las plataformas superiores. Esta técnica
+    no funciona si has iniciado el movimiento con un
+    salto; solo se activa al dejarte caer desde una
+    cornisa.
+
+  ¡Utiliza este truco para explorar la sala y esquivar
+  los ataques del jefe desde cualquier altura!
 
 ────────────────────────────────────────────
  ARMAS Y EQUIPO
